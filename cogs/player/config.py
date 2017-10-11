@@ -23,4 +23,4 @@ YOUTUBE_LOGO_FILE = "lib/img/youtube.png"
 
 
 # List of guilds to start bot on initially
-INITIAL_SESSIONS = json.load(open(path.dirname(__file__) + "\startup.json"))
+INITIAL_SESSIONS = json.load(open(path.dirname(__file__) + "/startup.json"))
