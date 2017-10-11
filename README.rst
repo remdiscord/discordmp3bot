@@ -20,7 +20,7 @@ Usage
             "voice_channel": 141045545992060929,
             "log_channel": 294154647759880192,
             "playlist": {
-                "playlist_directory": "lib/mp3"
+                "playlist_directory": "lib/mp3",
                 "cache_length": 10
             },
             "permissions": {
