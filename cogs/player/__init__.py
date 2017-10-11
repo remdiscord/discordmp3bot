@@ -161,7 +161,8 @@ class Player:
     @commands.check(_no_session)
     @commands.check(_is_admin)
     async def player_start_session(self, ctx, voice_channel:commands.converter.VoiceChannelConverter, *, log_channel=None):
-
+        """Starts a new player given a voice and log channel."""
+        
         try:
             log_channel = await commands.converter.TextChannelConverter().convert(ctx, log_channel)
         except commands.BadArgument:
