@@ -160,8 +160,7 @@ class Player:
     @commands.check(_is_guild)
     @commands.check(_no_session)
     @commands.check(_is_admin)
-    async def player_start_session(self, ctx, voice_channel:commands.converter.VoiceChannelConverter, log_channel):
-        """Starts a new player given a voice and log channel."""
+    async def player_start_session(self, ctx, voice_channel:commands.converter.VoiceChannelConverter, *, log_channel=None):
 
         try:
             log_channel = await commands.converter.TextChannelConverter().convert(ctx, log_channel)
@@ -180,7 +179,7 @@ class Player:
     @commands.command(name="add_player")
     @commands.check(_is_guild)
     @commands.check(_is_admin)
-    async def add_player_session(self, ctx, voice_channel:commands.converter.VoiceChannelConverter, log_channel):
+    async def add_player_session(self, ctx, voice_channel:commands.converter.VoiceChannelConverter, *, log_channel=None):
         """Adds a player session to the startup list"""
         try:
             log_channel = await commands.converter.TextChannelConverter().convert(ctx, log_channel).id
