@@ -7,6 +7,8 @@ Discord mp3 player cog
 Copyright (c) 2017 Joshua Butt
 """
 
+import json
+
 from re import findall
 
 import discord
@@ -174,6 +176,29 @@ class Player:
             "playlist": Playlist(self.bot.log)
         }
         self.sessions[session_config["voice"].guild.id] = Session(**session_config)
+
+    @commands.command(name="add_player")
+    @commands.check(_is_guild)
+    @commands.check(_is_admin)
+    async def add_player_session(self, ctx, voice_channel:commands.converter.VoiceChannelConverter, log_channel):
+        """Adds a player session to the startup list"""
+        try:
+            log_channel = await commands.converter.TextChannelConverter().convert(ctx, log_channel).id
+        except commands.BadArgument:
+            log_channel = None
+
+        startup_list = json.load(open(SESSIONS_FILE))
+        startup_list.append(
+            {
+                "voice_channel": voice_channel.id,
+                "log_channel": log_channel
+            }
+        )
+        json.dump(startup_list, open(SESSIONS_FILE, "w"))
+
+        embed = discord.Embed(title="Permanently adding player...", description="saving...", colour=0x004d40)
+        embed.set_author(name=f"Add Player - requested by: {ctx.author.name}", icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=embed)
 
 
     @commands.command(name="stop_player")
