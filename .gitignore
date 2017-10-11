@@ -1,0 +1,7 @@
+secrets.py
+.vscode
+*.pyc
+*.log
+lib/mp3/*
+
+cogs/player/startup.json
