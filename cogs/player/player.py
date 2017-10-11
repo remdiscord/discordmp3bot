@@ -110,16 +110,17 @@ class Session:
 
     async def _log_track(self, track):
         """Logs the specified track in the `log_channel`"""
-        if isinstance(track, Mp3File):
-            embed = discord.Embed(title=track.title, description=f"{track.album} - ({track.date})", colour=0x009688)
-            embed.set_author(name=track.artist)
-            embed.set_thumbnail(url="attachment://cover.jpg")
-            await self.log_channel.send(embed=embed, file=discord.File(track.cover, "cover.jpg"))
-        else:
-            embed = discord.Embed(title=track.title, description=track.author, colour=0xf44336)
-            embed.set_author(name=f"Youtube Video - requested by {track.requester.name}", url=f"https://youtu.be/{track.videoid}", icon_url="attachment://youtube.png")
-            embed.set_thumbnail(url=track.bigthumb)
-            await self.log_channel.send(embed=embed, file=discord.File(open(YOUTUBE_LOGO_FILE, 'rb'), "youtube.png"))
+        if self.log_channel:
+            if isinstance(track, Mp3File):
+                embed = discord.Embed(title=track.title, description=f"{track.album} - ({track.date})", colour=0x009688)
+                embed.set_author(name=track.artist)
+                embed.set_thumbnail(url="attachment://cover.jpg")
+                await self.log_channel.send(embed=embed, file=discord.File(track.cover, "cover.jpg"))
+            else:
+                embed = discord.Embed(title=track.title, description=track.author, colour=0xf44336)
+                embed.set_author(name=f"Youtube Video - requested by {track.requester.name}", url=f"https://youtu.be/{track.videoid}", icon_url="attachment://youtube.png")
+                embed.set_thumbnail(url=track.bigthumb)
+                await self.log_channel.send(embed=embed, file=discord.File(open(YOUTUBE_LOGO_FILE, 'rb'), "youtube.png"))
 
     async def _play_track(self, track):
         """Plays the specified track"""
