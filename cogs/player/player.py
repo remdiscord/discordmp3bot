@@ -16,8 +16,6 @@ from re import findall
 import discord
 from discord.ext import commands
 
-import pafy
-
 from .config import *
 from .mp3file import Mp3File
 
