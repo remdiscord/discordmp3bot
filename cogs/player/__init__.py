@@ -139,6 +139,15 @@ class Player:
         embed.set_author(name=f"Volume change - requested by: {ctx.author.name}", icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
     
+    @commands.command(name="playing")
+    @commands.check(_is_guild)
+    @commands.check(_is_session)
+    async def player_get_current_track(self, ctx):
+        """Display's the currently playing track"""
+        session = self._get_session(ctx)
+        track_metadata = await session.log_track()
+        await ctx.send(**track_metadata)
+
 
     @commands.command(name="queue")
     @commands.check(_is_guild)

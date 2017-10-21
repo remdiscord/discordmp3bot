@@ -79,6 +79,7 @@ class Session:
         self.permissions = permissions or dict()
 
         self.is_playing = True
+        self.current_track = None
         
         self.skip_requests = list()
         self.volume = DEFAULT_VOLUME
@@ -108,23 +109,34 @@ class Session:
         self.is_playing = False
         self.voice.stop()
 
-    async def _log_track(self, track):
+    async def log_track(self):
         """Logs the specified track in the `log_channel`"""
-        if self.log_channel:
-            if isinstance(track, Mp3File):
-                embed = discord.Embed(title=track.title, description=f"{track.album} - ({track.date})", colour=0x009688)
-                embed.set_author(name=track.artist)
-                embed.set_thumbnail(url="attachment://cover.jpg")
-                await self.log_channel.send(embed=embed, file=discord.File(track.cover, "cover.jpg"))
-            else:
-                embed = discord.Embed(title=track.title, description=track.author, colour=0xf44336)
-                embed.set_author(name=f"Youtube Video - requested by {track.requester.name}", url=f"https://youtu.be/{track.videoid}", icon_url="attachment://youtube.png")
-                embed.set_thumbnail(url=track.bigthumb)
-                await self.log_channel.send(embed=embed, file=discord.File(open(YOUTUBE_LOGO_FILE, 'rb'), "youtube.png"))
+        if isinstance(self.current_track, Mp3File):
+            embed = discord.Embed(title=self.current_track.title, description=f"{self.current_track.album} - ({self.current_track.date})", colour=0x009688)
+            embed.set_author(name=self.current_track.artist)
+            embed.set_thumbnail(url="attachment://cover.jpg")
+            return {
+                "embed": embed, 
+                "file": discord.File(self.current_track.cover, "cover.jpg")
+            }
+        else:
+            embed = discord.Embed(title=track.title, description=track.author, colour=0xf44336)
+            embed.set_author(name=f"Youtube Video - requested by {self.current_track.requester.name}", url=f"https://youtu.be/{self.current_track.videoid}", icon_url="attachment://youtube.png")
+            embed.set_thumbnail(url=self.current_track.bigthumb)
+            return {
+                "embed": embed, 
+                "file": discord.File(open(YOUTUBE_LOGO_FILE, 'rb'), "youtube.png")
+            }
 
     async def _play_track(self, track):
         """Plays the specified track"""
-        await self._log_track(track)
+        self.current_track = track
+        
+        # Log track to log_channel
+        if self.log_channel:
+            track_metadata = await self.log_track()
+            await self.log_channel.send(**track_metadata)
+        
         if isinstance(track, Mp3File):
             player = discord.FFmpegPCMAudio(track.file)
         else:
