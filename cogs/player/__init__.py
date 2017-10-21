@@ -101,7 +101,10 @@ class Player:
 
         try:
             session = self._get_session(ctx)
-            video_id = findall(r'(?<=\/|=)([A-z0-9-_]{11})(?=$|\&)',  video_url)[0]
+            try:
+                video_id = findall(r'(?<=\/|=)([A-z0-9-_]{11})(?=$|\&)',  video_url)[0]
+            except IndexError:
+                raise TrackError
             video = YoutubeVideo(video_id, ctx.author)
             session.playlist.add_request(video)
 
@@ -109,7 +112,7 @@ class Player:
             embed.set_author(name=f"Youtube request made by - {ctx.author.name}", icon_url=ctx.bot.user.avatar_url, url=f"https://youtube.be/{video_id}")
             embed.set_thumbnail(url=video.thumbnail)
 
-        except Exception as e:
+        except TrackError as e:
             self.bot.log.error(type(e).__name__ + ': ' + str(e))
             embed = discord.Embed(title="There was an error processing your request...", description=f"for more information type `{ctx.prefix}help {ctx.command.name}`.", colour=0xe57a80)
             embed.set_author(name=f"Error: {ctx.command.name}", icon_url=ctx.bot.user.avatar_url)

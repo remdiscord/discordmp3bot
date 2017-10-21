@@ -43,7 +43,7 @@ class Playlist:
         """Retruns the next item in the playlist as a :class:Mp3File"""
         try:
             return Mp3File(self.tracks.pop(0), self.log)
-        except IndexError:
+        except (IndexError, TrackError):
             self.tracks = self._get_tracks
             return self._get_new_track
 

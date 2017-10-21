@@ -16,8 +16,14 @@ from .config import *
 
 __all__ = [
     'Mp3File',
-    'YoutubeVideo'
+    'YoutubeVideo',
+
+    'TrackError'
 ]
+
+class TrackError(Exception):
+    """"""
+    pass
 
 class Track:
     """Base class for various audio track types"""
@@ -41,6 +47,7 @@ class Mp3File(Track):
     """Class containing metadata for MP3 file"""
     def __init__(self, file, log):
         self.file = file
+        self.filename = self.file.encode("utf-8", 'ignore')
         mp3_file = MP3(self.file)
         self.log = log
 
@@ -54,17 +61,18 @@ class Mp3File(Track):
             try:
                 setattr(self, var, mp3_file.tags[tag][0])
             except KeyError:
-                self.log.warning(f"Failed to find {var} for {self.file}")
+                self.log.warning(f"Failed to find {var} for {self.filename}")
                 setattr(self, var, "???")
             except TypeError:
-                self.log.error(f"Failed to load track {track.file}")
+                self.log.error(f"Failed to load track {self.filename}")
+                raise TrackError
 
         # Find album artwork
         try:
             self.cover = mp3_file[u'APIC:'].data
         except KeyError as e:
-            self.log.warning(f"Failed to find cover for {self.file}")
-            self.cover = open(ART_NOT_FOUND_FILE, 'rb')\
+            self.log.warning(f"Failed to find cover for {self.filename}")
+            self.cover = open(ART_NOT_FOUND_FILE, 'rb')
 
     @property
     def player(self):
@@ -87,7 +95,11 @@ class Mp3File(Track):
 class YoutubeVideo(Track):
     """Class containing metadata for a YouTube video"""
     def __init__(self, video_id, requester):
-        self.video = pafy.new("https://youtu.be/" + video_id)
+        try:
+            self.video = pafy.new("https://youtu.be/" + video_id)
+        except:
+            self.log.error(f"Failed to load youtube video: {video_id}")
+            raise TrackError
 
         self.title = self.video.title
         self.creator = self.video.author
