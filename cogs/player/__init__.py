@@ -18,7 +18,6 @@ from .config import *
 from .player import Playlist, Session
 from .track import *
 
-
 class Player:
     def __init__(self, bot):
         self.bot = bot
@@ -224,31 +223,31 @@ class Player:
     async def on_ready(self):
         for session in INITIAL_SESSIONS: # Start Inital player sessions
 
-            #try:
-            session_config = {
-                "bot": self.bot,
-                "voice": await self.bot.get_channel(session["voice_channel"]).connect(),
-                "log_channel": self.bot.get_channel(session["log_channel"])
-            }
+            try:
+                session_config = {
+                    "bot": self.bot,
+                    "voice": await self.bot.get_channel(session["voice_channel"]).connect(),
+                    "log_channel": self.bot.get_channel(session["log_channel"])
+                }
 
-            if session.get("playlist", None):
-                session_config["playlist"] = Playlist(self.bot.log, **session["playlist"])
-            else:
-                session_config["playlist"] = Playlist(self.bot.log)
+                if session.get("playlist", None):
+                    session_config["playlist"] = Playlist(self.bot.log, **session["playlist"])
+                else:
+                    session_config["playlist"] = Playlist(self.bot.log)
 
-            if session.get("permissions", None):
-                permissions = dict()
-                for command, role_id in session["permissions"].items():
-                    permissions[command] = next(role for role in session_config["voice"].guild.roles if role.id == role_id)
-                session_config["permissions"] = permissions
-            else:
-                permissions = None
-    
-            self.sessions[session_config["voice"].guild.id] = Session(**session_config)
+                if session.get("permissions", None):
+                    permissions = dict()
+                    for command, role_id in session["permissions"].items():
+                        permissions[command] = next(role for role in session_config["voice"].guild.roles if role.id == role_id)
+                    session_config["permissions"] = permissions
+                else:
+                    permissions = None
+        
+                self.sessions[session_config["voice"].guild.id] = Session(**session_config)
 
             except Exception as e:
                self.bot.log.error(f"Failed to start session for channel: {session['voice_channel']}")
-               self.bot.log.error(f"{type(e).__name__}: {str(e)})
+               self.bot.log.error(f"{type(e).__name__}: {e}")
 
 
     async def on_voice_state_update(self, member, before, after):
@@ -257,7 +256,7 @@ class Player:
         except AttributeError:
             pass
         except Exception as e:
-            self.bot.log.error(f"{type(e).__name__}: {str(e)})
+            self.bot.log.error(f"{type(e).__name__}: {e}")
 
 
     async def on_command_error(self, ctx, error):
