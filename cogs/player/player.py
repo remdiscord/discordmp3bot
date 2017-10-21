@@ -88,7 +88,8 @@ class Session:
     @property
     def listeners(self):
         """Returns the list of current listeners"""
-        return list(filter(self.voice.guild.me.__ne__, [member for member in self.voice.channel.members if not member.voice.self_deaf]))
+        listeners = [m for m in self.voice.channel.members if not (m.voice.self_deaf or m.voice.deaf)]
+        return list(filter(self.voice.guild.me.__ne__, listeners))
 
     def _toggle_next(self, error=None):
         """Plays the next song"""
@@ -121,9 +122,11 @@ class Session:
     async def check_voice_state(self):
         """Checks wether the player should be paused or resumed"""
         listeners = self.listeners
-        if len(listeners) != 0 and not self.voice.is_playing():
+        server_muted = self.voice.channel.guild.me.voice.mute
+
+        if len(listeners) != 0 and not self.voice.is_playing() and not server_muted:
             self.voice.resume()
-        elif len(listeners) == 0 and self.voice.is_playing():
+        elif (len(listeners) == 0 and self.voice.is_playing()) or server_muted:
             self.voice.pause()
 
     async def _player_task(self):
