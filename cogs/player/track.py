@@ -2,7 +2,7 @@
 
 """
 mp3bot ~ cogs/player/track.py
-mp3 file class
+Audio track classes
 
 Copyright (c) 2017 Joshua Butt
 """
@@ -21,16 +21,20 @@ __all__ = [
 
 class Track:
     """Base class for various audio track types"""
+
     @property
     def player(self):
+        """Returns an instance of :class:`discord.FFmpegPCMAudio`"""
         raise NotImplementedError
 
     @property
     def embed(self):
+        """Returns an instance of :class:`discord.Embed`"""
         raise NotImplementedError
 
     @property
     def queue(self):
+        """Returns a string containg information to be displayed in the upcoming queue"""
         raise NotImplementedError
 
 class Mp3File(Track):
@@ -81,6 +85,7 @@ class Mp3File(Track):
         return f"{self.artist}: {self.album} - ({self.date})"
 
 class YoutubeVideo(Track):
+    """Class containing metadata for a YouTube video"""
     def __init__(self, video_id, requester):
         self.video = pafy.new("https://youtu.be/" + video_id)
 
