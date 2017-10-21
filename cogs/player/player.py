@@ -17,7 +17,7 @@ import discord
 from discord.ext import commands
 
 from .config import *
-from .mp3file import Mp3File
+from .track import *
 
 
 class Playlist:
@@ -107,40 +107,15 @@ class Session:
         self.is_playing = False
         self.voice.stop()
 
-    async def log_track(self):
-        """Logs the specified track in the `log_channel`"""
-        if isinstance(self.current_track, Mp3File):
-            embed = discord.Embed(title=self.current_track.title, description=f"{self.current_track.album} - ({self.current_track.date})", colour=0x009688)
-            embed.set_author(name=self.current_track.artist)
-            embed.set_thumbnail(url="attachment://cover.jpg")
-            return {
-                "embed": embed, 
-                "file": discord.File(self.current_track.cover, "cover.jpg")
-            }
-        else:
-            embed = discord.Embed(title=track.title, description=track.author, colour=0xf44336)
-            embed.set_author(name=f"Youtube Video - requested by {self.current_track.requester.name}", url=f"https://youtu.be/{self.current_track.videoid}", icon_url="attachment://youtube.png")
-            embed.set_thumbnail(url=self.current_track.bigthumb)
-            return {
-                "embed": embed, 
-                "file": discord.File(open(YOUTUBE_LOGO_FILE, 'rb'), "youtube.png")
-            }
-
     async def _play_track(self, track):
         """Plays the specified track"""
         self.current_track = track
         
         # Log track to log_channel
         if self.log_channel:
-            track_metadata = await self.log_track()
-            await self.log_channel.send(**track_metadata)
+            await self.log_channel.send(**self.current_track.embed)
         
-        if isinstance(track, Mp3File):
-            player = discord.FFmpegPCMAudio(track.file)
-        else:
-            player = discord.FFmpegPCMAudio(track.getbestaudio().url, options="-bufsize 7680k")
-
-        player = discord.PCMVolumeTransformer(player, self.volume)
+        player = discord.PCMVolumeTransformer(self.current_track.player, self.volume)
         self.voice.play(source=player, after=self._toggle_next)
 
     async def check_voice_state(self):

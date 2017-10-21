@@ -14,10 +14,9 @@ from re import findall
 import discord
 from discord.ext import commands
 
-import pafy
-
 from .config import *
-from .player import Mp3File, Playlist, Session
+from .player import Playlist, Session
+from .track import *
 
 
 class Player:
@@ -104,13 +103,12 @@ class Player:
         try:
             session = self._get_session(ctx)
             video_id = findall(r'(?<=\/|=)([A-z0-9-_]{11})(?=$|\&)',  video_url)[0]
-            video = pafy.new("https://youtu.be/" + video_id)
-            video.requester = ctx.author
+            video = YoutubeVideo(video_id, ctx.author)
             session.playlist.add_request(video)
 
-            embed = discord.Embed(title="Youtube Video request", description=f"Adding **{video.title}** by **{video.author}** to the queue...", colour=0x004d40)
+            embed = discord.Embed(title="Youtube Video request", description=f"Adding **{video.title}** by **{video.creator}** to the queue...", colour=0x004d40)
             embed.set_author(name=f"Youtube request made by - {ctx.author.name}", icon_url=ctx.bot.user.avatar_url, url=f"https://youtube.be/{video_id}")
-            embed.set_thumbnail(url=video.bigthumb)
+            embed.set_thumbnail(url=video.thumbnail)
 
         except Exception as e:
             self.bot.log.error(type(e).__name__ + ': ' + str(e))
@@ -139,14 +137,14 @@ class Player:
         embed.set_author(name=f"Volume change - requested by: {ctx.author.name}", icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
     
+
     @commands.command(name="playing")
     @commands.check(_is_guild)
     @commands.check(_is_session)
     async def player_get_current_track(self, ctx):
         """Display's the currently playing track"""
         session = self._get_session(ctx)
-        track_metadata = await session.log_track()
-        await ctx.send(**track_metadata)
+        await ctx.send(**session.current_track.embed)
 
 
     @commands.command(name="queue")
@@ -157,10 +155,7 @@ class Player:
         session = self._get_session(ctx)
         embed = discord.Embed(title=f"{self.bot.user.name} Playlist - Upcoming songs:", description="", colour=0x004d40)
         for track in session.playlist.queue:
-            if isinstance(track, Mp3File):
-                embed.add_field(name=track.title, value=f"{track.artist}: {track.album} - ({track.date})", inline=False)
-            else:
-                embed.add_field(name=track.title, value=f"{track.author} - requested by - {track.requester.name}", inline=False)
+            embed.add_field(name=track.title, value=track.queue, inline=False)
 
         await ctx.send(embed=embed)
 
@@ -185,6 +180,7 @@ class Player:
             "playlist": Playlist(self.bot.log)
         }
         self.sessions[session_config["voice"].guild.id] = Session(**session_config)
+
 
     @commands.command(name="add_player")
     @commands.check(_is_guild)
@@ -228,30 +224,31 @@ class Player:
     async def on_ready(self):
         for session in INITIAL_SESSIONS: # Start Inital player sessions
 
-            try:
-                session_config = {
-                    "bot": self.bot,
-                    "voice": await self.bot.get_channel(session["voice_channel"]).connect(),
-                    "log_channel": self.bot.get_channel(session["log_channel"])
-                }
+            #try:
+            session_config = {
+                "bot": self.bot,
+                "voice": await self.bot.get_channel(session["voice_channel"]).connect(),
+                "log_channel": self.bot.get_channel(session["log_channel"])
+            }
 
-                if session.get("playlist", None):
-                    session_config["playlist"] = Playlist(self.bot.log, **session["playlist"])
-                else:
-                    session_config["playlist"] = Playlist(self.bot.log)
+            if session.get("playlist", None):
+                session_config["playlist"] = Playlist(self.bot.log, **session["playlist"])
+            else:
+                session_config["playlist"] = Playlist(self.bot.log)
 
-                if session.get("permissions", None):
-                    permissions = dict()
-                    for command, role_id in session["permissions"].items():
-                        permissions[command] = next(role for role in session_config["voice"].guild.roles if role.id == role_id)
-                    session_config["permissions"] = permissions
-                else:
-                    permissions = None
-        
-                self.sessions[session_config["voice"].guild.id] = Session(**session_config)
+            if session.get("permissions", None):
+                permissions = dict()
+                for command, role_id in session["permissions"].items():
+                    permissions[command] = next(role for role in session_config["voice"].guild.roles if role.id == role_id)
+                session_config["permissions"] = permissions
+            else:
+                permissions = None
+    
+            self.sessions[session_config["voice"].guild.id] = Session(**session_config)
 
             except Exception as e:
-                self.bot.log.error(f"Failed to start session for channel: {session['voice_channel']}")
+               self.bot.log.error(f"Failed to start session for channel: {session['voice_channel']}")
+               self.bot.log.error(f"{type(e).__name__}: {str(e)})
 
 
     async def on_voice_state_update(self, member, before, after):
@@ -260,7 +257,7 @@ class Player:
         except AttributeError:
             pass
         except Exception as e:
-            self.bot.log.error(type(e).__name__ + ': ' + str(e))
+            self.bot.log.error(f"{type(e).__name__}: {str(e)})
 
 
     async def on_command_error(self, ctx, error):
