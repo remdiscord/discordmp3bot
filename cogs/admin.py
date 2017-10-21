@@ -90,8 +90,6 @@ class Admin:
         exec_test = re.compile(r"(?:^(?:(?:for)|(?:def)|(?:while)|(?:if)))|(?:^([a-z_][A-z0-9_\-\.]*)\s?(?:\+|-|\\|\*)?=)")
         commands = []
 
-        print(code.split(';'))
-
         for command in code.split(';'):
             try:
                 command = command.strip()
