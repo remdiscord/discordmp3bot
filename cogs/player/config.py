@@ -20,7 +20,11 @@ DEFAULT_VOLUME = 0.15
 # Discord embed attachments
 ART_NOT_FOUND_FILE = "lib/img/art_not_found.png"
 YOUTUBE_LOGO_FILE = "lib/img/youtube.png"
+SOUNDCLOUD_LOGO_FILE = "lib/img/soundcloud.png"
 
 # List of guilds to start bot on initially
 SESSIONS_FILE = path.dirname(__file__) + "/startup.json"
 INITIAL_SESSIONS = json.load(open(SESSIONS_FILE))
+
+# Config for soundcloud
+SOUNDCLOUD_CLIENT_ID = "a3e059563d7fd3372b49b37f00a00bcf"

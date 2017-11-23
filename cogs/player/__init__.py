@@ -90,12 +90,12 @@ class Player:
         except Exception as e:
             self.bot.log.error(type(e).__name__ + ': ' + str(e))
 
-    @commands.command(name="request")
+    @commands.command(name="youtube", aliases=["request"])
     @commands.check(_is_guild)
     @commands.check(_is_session)
     @commands.check(_is_listening)
     @commands.check(_has_permission)
-    async def player_request_song(self, ctx, video_url):
+    async def player_request_youtube(self, ctx, video_url):
         """Adds a youtube video to the request queue."""
         await ctx.trigger_typing()
 
@@ -104,12 +104,12 @@ class Player:
             try:
                 video_id = findall(r'(?<=\/|=)([A-z0-9-_]{11})(?=$|\&)',  video_url)[0]
             except IndexError:
-                raise TrackError
+                raise TrackError("Error parsing input")
             video = YoutubeVideo(video_id, ctx.author)
             session.playlist.add_request(video)
 
             embed = discord.Embed(title="Youtube Video request", description=f"Adding **{video.title}** by **{video.creator}** to the queue...", colour=0x004d40)
-            embed.set_author(name=f"Youtube request made by - {ctx.author.name}", icon_url=ctx.bot.user.avatar_url, url=f"https://youtube.be/{video_id}")
+            embed.set_author(name=f"Youtube request made by - {ctx.author.name}", icon_url=ctx.bot.user.avatar_url, url=video.url)
             embed.set_thumbnail(url=video.thumbnail)
 
         except TrackError as e:
@@ -119,6 +119,35 @@ class Player:
 
         await ctx.send(embed=embed)
 
+    @commands.command(name="soundcloud")
+    @commands.check(_is_guild)
+    @commands.check(_is_session)
+    @commands.check(_is_listening)
+    @commands.check(_has_permission)
+    async def player_request_soundcloud(self, ctx, search_term):
+        """Adds a soundcloud track to the request queue.
+        
+        Note this command is experimental and may not work occasionally.
+        """
+        try:
+            await ctx.trigger_typing()
+
+            session = self._get_session(ctx)
+
+            track = SoundCloudTrack(search_term, ctx.author)
+            session.playlist.add_request(track)
+
+            embed = discord.Embed(title="Soundcloud track request", description=f"Adding **{track.title}** by **{track.creator}** to the queue...", colour=0x004d40)
+            embed.set_author(name=f"Youtube request made by - {ctx.author.name}", icon_url=ctx.bot.user.avatar_url, url=track.url)
+            embed.set_thumbnail(url=track.thumbnail)
+
+        except TrackError as e:
+            self.bot.log.error(type(e).__name__ + ': ' + str(e))
+            embed = discord.Embed(title="There was an error processing your request...", description=f"for more information type `{ctx.prefix}help {ctx.command.name}`.", colour=0xe57a80)
+            embed.set_author(name=f"Error: {ctx.command.name}", icon_url=ctx.bot.user.avatar_url)
+        
+
+        await ctx.send(embed=embed)
 
     @commands.command(name="volume")
     @commands.check(_is_guild)

@@ -9,6 +9,7 @@ Copyright (c) 2017 Joshua Butt
 
 import discord
 import pafy
+import soundcloud
 
 from mutagen.mp3 import MP3
 
@@ -17,6 +18,7 @@ from .config import *
 __all__ = [
     'Mp3File',
     'YoutubeVideo',
+    'SoundCloudTrack',
 
     'TrackError'
 ]
@@ -43,6 +45,8 @@ class Track:
         """Returns a string containg information to be displayed in the upcoming queue"""
         raise NotImplementedError
 
+# - Local MP3 File
+
 class Mp3File(Track):
     """Class containing metadata for MP3 file"""
     def __init__(self, file, log):
@@ -65,7 +69,7 @@ class Mp3File(Track):
                 setattr(self, var, "???")
             except TypeError:
                 self.log.error(f"Failed to load track {self.filename}")
-                raise TrackError
+                raise TrackError("Possibly corrupt MP3 tag")
 
         # Find album artwork
         try:
@@ -92,18 +96,20 @@ class Mp3File(Track):
     def queue(self):
         return f"{self.artist}: {self.album} - ({self.date})"
 
+# - Youtube Video
+
 class YoutubeVideo(Track):
     """Class containing metadata for a YouTube video"""
     def __init__(self, video_id, requester):
         try:
-            self.video = pafy.new("https://youtu.be/" + video_id)
-        except:
+            self.video = pafy.new(f"https://youtu.be/{video_id}")
+        except Exception as e:
             self.log.error(f"Failed to load youtube video: {video_id}")
-            raise TrackError
+            raise TrackError("Unable to find youtube video") from e
 
         self.title = self.video.title
         self.creator = self.video.author
-        self.video_id = self.video.videoid
+        self.url = f"https://youtu.be/{video_id}"
         self.thumbnail = self.video.bigthumb
 
         self.requester = requester
@@ -115,11 +121,50 @@ class YoutubeVideo(Track):
     @property
     def embed(self):
         embed = discord.Embed(title=self.title, description=self.creator, colour=0xf44336)
-        embed.set_author(name=f"Youtube Video - requested by {self.requester.name}", url=f"https://youtu.be/{self.video_id}", icon_url="attachment://youtube.png")
+        embed.set_author(name=f"Youtube Video - requested by {self.requester.name}", url=self.url, icon_url="attachment://youtube.png")
         embed.set_thumbnail(url=self.thumbnail)
         return {
             "embed": embed, 
             "file": discord.File(open(YOUTUBE_LOGO_FILE, 'rb'), "youtube.png")
+        }
+
+    @property
+    def queue(self):
+        return f"{self.creator} - requested by - {self.requester.name}"
+
+# - Soundcloud track
+
+soundcloud_client = soundcloud.Client(client_id=SOUNDCLOUD_CLIENT_ID)
+
+class SoundCloudTrack(Track):
+    """Class containing metadata for a YouTube video"""
+    def __init__(self, search_term, requester):
+        global soundcloud_client
+        try:
+            self.track = soundcloud_client.get('/tracks', q=search_term)[0]
+        
+
+            self.title = self.track.title
+            self.creator = self.track.user["username"]
+            self.url = self.track.permalink_url
+            self.thumbnail = self.track.artwork_url
+
+            self.requester = requester
+        except Exception as e:
+            raise TrackError from e
+
+    @property
+    def player(self):
+        return discord.FFmpegPCMAudio(f"{self.track.stream_url}?client_id={SOUNDCLOUD_CLIENT_ID}", options="-bufsize 7680k")
+
+    @property
+    def embed(self):
+        embed = discord.Embed(title=self.title, description=self.creator, colour=0xf44336)
+        embed.set_author(name=f"SoundCloud Track - requested by {self.requester.name}", url=self.url, icon_url="attachment://soundcloud.png")
+        embed.set_thumbnail(url=self.thumbnail)
+        return {
+            "embed": embed, 
+            "file": discord.File(open(SOUNDCLOUD_LOGO_FILE, 'rb'), "soundcloud.png")
         }
 
     @property
