@@ -124,7 +124,7 @@ class Player:
     @commands.check(_is_session)
     @commands.check(_is_listening)
     @commands.check(_has_permission)
-    async def player_request_soundcloud(self, ctx, search_term):
+    async def player_request_soundcloud(self, ctx, *, search_term:str):
         """Adds a soundcloud track to the request queue.
         
         Note this command is experimental and may not work occasionally.
