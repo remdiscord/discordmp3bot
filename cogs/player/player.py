@@ -42,7 +42,7 @@ class Playlist:
     def _get_new_track(self):
         """Retruns the next item in the playlist as a :class:Mp3File"""
         try:
-            return Mp3File(self.tracks.pop(0), self.log)
+            return Mp3File(self.log, self.tracks.pop(0))
         except (IndexError, TrackError):
             self.tracks = self._get_tracks
             return self._get_new_track
@@ -114,7 +114,7 @@ class Session:
         
         # Log track to log_channel
         if self.log_channel:
-            await self.log_channel.send(**self.current_track.embed)
+            await self.log_channel.send(**self.current_track.playing_embed)
         
         player = discord.PCMVolumeTransformer(self.current_track.player, self.volume)
         self.voice.play(source=player, after=self._toggle_next)

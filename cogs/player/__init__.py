@@ -7,6 +7,7 @@ Discord mp3 player cog
 Copyright (c) 2017 Joshua Butt
 """
 
+import asyncio
 import json
 
 from re import findall
@@ -16,7 +17,22 @@ from discord.ext import commands
 
 from .config import *
 from .player import Playlist, Session
-from .track import *
+from .search import *
+
+class SearchConverter(commands.Converter):
+    """Converts to subclass of :class:`Search`"""
+    async def convert(self, ctx, argument):
+        
+        result = None
+        for cls, search_type in search_types:
+            if search_type == argument.lower():
+                result = cls
+                break
+
+        if not issubclass(result, Search):
+            raise commands.BadArgument(F'Search Type "{argument}" not found.')
+
+        return result
 
 class Player:
     def __init__(self, bot):
@@ -87,67 +103,48 @@ class Player:
 
             e.set_author(name=f"Skip request - requested by: {session.skip_requests[0].name}", icon_url=session.skip_requests[0].avatar_url)
             await ctx.send(embed=e)
+
         except Exception as e:
             self.bot.log.error(type(e).__name__ + ': ' + str(e))
 
-    @commands.command(name="youtube", aliases=["request"])
+    @commands.command(name="request")
     @commands.check(_is_guild)
     @commands.check(_is_session)
     @commands.check(_is_listening)
     @commands.check(_has_permission)
-    async def player_request_youtube(self, ctx, video_url):
-        """Adds a youtube video to the request queue."""
+    async def player_request(self, ctx, search_type:SearchConverter, *, query:str=None):
+        """Adds a specified request to the queue."""
         await ctx.trigger_typing()
 
+        session = self._get_session(ctx)
+        vote_reaction_emojis = [(str(i).encode("utf-8") + b"\xe2\x83\xa3").decode("utf-8") for i in range(1,9)]
+
         try:
-            session = self._get_session(ctx)
+            search = search_type(self.bot.log, query, ctx.author)
+            
+            result_message = await ctx.send(**search.search_embed)
+
+            for index, track in enumerate(search.tracks):
+                await result_message.add_reaction(vote_reaction_emojis[index])
+
+            # listen for reaction result
+            def check(reaction, user):
+                return user == ctx.author and reaction.emoji in vote_reaction_emojis[:len(search.tracks)]
             try:
-                video_id = findall(r'(?<=\/|=)([A-z0-9-_]{11})(?=$|\&)',  video_url)[0]
-            except IndexError:
-                raise TrackError("Error parsing input")
-            video = YoutubeVideo(video_id, ctx.author)
-            session.playlist.add_request(video)
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=60, check=check)
+            except asyncio.TimeoutError:
+                raise TrackError("You did not choose a track in time")
 
-            embed = discord.Embed(title="Youtube Video request", description=f"Adding **{video.title}** by **{video.creator}** to the queue...", colour=0x004d40)
-            embed.set_author(name=f"Youtube request made by - {ctx.author.name}", icon_url=ctx.bot.user.avatar_url, url=video.url)
-            embed.set_thumbnail(url=video.thumbnail)
+            await result_message.delete()
+            track = search.tracks[int(reaction.emoji[0]) - 1]
 
-        except TrackError as e:
-            self.bot.log.error(type(e).__name__ + ': ' + str(e))
-            embed = discord.Embed(title="There was an error processing your request...", description=f"for more information type `{ctx.prefix}help {ctx.command.name}`.", colour=0xe57a80)
-            embed.set_author(name=f"Error: {ctx.command.name}", icon_url=ctx.bot.user.avatar_url)
-
-        await ctx.send(embed=embed)
-
-    @commands.command(name="soundcloud")
-    @commands.check(_is_guild)
-    @commands.check(_is_session)
-    @commands.check(_is_listening)
-    @commands.check(_has_permission)
-    async def player_request_soundcloud(self, ctx, *, search_term:str):
-        """Adds a soundcloud track to the request queue.
-        
-        Note this command is experimental and may not work occasionally.
-        """
-        try:
-            await ctx.trigger_typing()
-
-            session = self._get_session(ctx)
-
-            track = SoundCloudTrack(search_term, ctx.author)
             session.playlist.add_request(track)
+            await ctx.send(**track.request_embed)
 
-            embed = discord.Embed(title="Soundcloud track request", description=f"Adding **{track.title}** by **{track.creator}** to the queue...", colour=0x004d40)
-            embed.set_author(name=f"Youtube request made by - {ctx.author.name}", icon_url=ctx.bot.user.avatar_url, url=track.url)
-            embed.set_thumbnail(url=track.thumbnail)
-
-        except TrackError as e:
+        except Exception as e:
             self.bot.log.error(type(e).__name__ + ': ' + str(e))
-            embed = discord.Embed(title="There was an error processing your request...", description=f"for more information type `{ctx.prefix}help {ctx.command.name}`.", colour=0xe57a80)
+            embed = discord.Embed(title="There was an error processing your request...", description=f"{e}\nFor more information type `{ctx.prefix}help {ctx.command.name}`.", colour=0xe57a80)
             embed.set_author(name=f"Error: {ctx.command.name}", icon_url=ctx.bot.user.avatar_url)
-        
-
-        await ctx.send(embed=embed)
 
     @commands.command(name="volume")
     @commands.check(_is_guild)
@@ -175,7 +172,7 @@ class Player:
     async def player_get_current_track(self, ctx):
         """Display's the currently playing track"""
         session = self._get_session(ctx)
-        await ctx.send(**session.current_track.embed)
+        await ctx.send(**session.current_track.playing_embed)
 
 
     @commands.command(name="queue")
