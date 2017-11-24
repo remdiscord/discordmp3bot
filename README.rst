@@ -51,5 +51,7 @@ Requirements
 *  ``discord.py`` `library <https://github.com/Rapptz/discord.py/tree/rewrite>`_
 * ``pafy`` library
 * ``mutagen`` library
+* ``google-api-python-client`` library
+* ``soundcloud`` library
 
 You can get these via ``pip``
