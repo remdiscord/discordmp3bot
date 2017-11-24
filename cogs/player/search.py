@@ -1,3 +1,16 @@
+#! /usr/bin/env python
+
+"""
+mp3bot ~ cogs/player/search.py
+Discord mp3 player search
+
+Copyright (c) 2017 Joshua Butt
+"""
+
+import difflib
+
+from glob import glob
+
 import discord
 import pafy
 import soundcloud
@@ -30,8 +43,30 @@ class Search:
         raise NotImplementedError
 
 class Mp3FileSearch(Search):
-    pass
+    def __init__(self, log, search_query, requester):
 
+        self.log = log
+        self.search_query = search_query
+        self.requester = requester
+        self.tracks = list()
+
+        files = [x[len(DEFAULT_PLAYLIST_DIRECTORY):] for x in glob(DEFAULT_PLAYLIST_DIRECTORY + "/*.mp3")]
+        for track in difflib.get_close_matches(search_query, files, n=SEARCH_RESULT_LIMIT, cutoff=0.1):
+            self.tracks.append(Mp3File(self.log, DEFAULT_PLAYLIST_DIRECTORY + track, requester=requester))
+
+
+    @property
+    def search_embed(self):
+        track_list = ""
+        for index, track in enumerate(self.tracks):
+            track_list += f"{index+1} - {track.title} by {track.artist}\n"
+
+        embed = discord.Embed(title=f"Results for search - Requested by {self.requester.name}", description=track_list, colour=0xe57a80)
+        embed.set_author(name=f"Local Tracks - Results for search {self.search_query}", icon_url=self.requester.avatar_url)
+
+        return {
+            "embed": embed
+        }
 
 youtube_client = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=YOUTUBE_CLIENT_ID)
 
@@ -42,14 +77,13 @@ class YoutubeSearch(Search):
         self.log = log
         self.search_query = search_query
         self.requester = requester
+        self.tracks = list()
 
         search_reponse = youtube_client.search().list(
             q=search_query,
             part="id,snippet",
             maxResults=10
         ).execute()
-
-        self.tracks = list()
 
         for search_result in search_reponse.get("items", []):
             if search_result["id"]["kind"] == "youtube#video":
@@ -59,7 +93,6 @@ class YoutubeSearch(Search):
 
     @property
     def search_embed(self):
-
         track_list = ""
         for index, track in enumerate(self.tracks):
             track_list += f"{index+1} - {track.title} by {track.creator}\n"
@@ -90,7 +123,6 @@ class SoundCloudSearch(Search):
 
     @property
     def search_embed(self):
-
         track_list = ""
         for index, track in enumerate(self.tracks):
             track_list += f"{index+1} - {track.title} by {track.creator}\n"
