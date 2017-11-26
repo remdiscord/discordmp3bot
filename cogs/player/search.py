@@ -8,6 +8,7 @@ Copyright (c) 2017 Joshua Butt
 """
 
 import difflib
+import re
 
 from glob import glob
 
@@ -48,11 +49,19 @@ class Mp3FileSearch(Search):
         self.log = log
         self.search_query = search_query
         self.requester = requester
+        self.files = dict()
         self.tracks = list()
 
-        files = [x[len(DEFAULT_PLAYLIST_DIRECTORY):] for x in glob(DEFAULT_PLAYLIST_DIRECTORY + "/*.mp3")]
-        for track in difflib.get_close_matches(search_query, files, n=SEARCH_RESULT_LIMIT, cutoff=0.1):
-            self.tracks.append(Mp3File(self.log, DEFAULT_PLAYLIST_DIRECTORY + track, requester=requester))
+        for filename in glob(DEFAULT_PLAYLIST_DIRECTORY + "/*.mp3"):
+            search_term = filename[len(DEFAULT_PLAYLIST_DIRECTORY):-4]
+            search_term = re.sub(r"[^A-z\s]", '', search_term.lower())
+            self.files[search_term] = filename
+
+        for search_term in difflib.get_close_matches(re.sub(r"[^A-z]", '', self.search_query.lower()), self.files, n=SEARCH_RESULT_LIMIT, cutoff=0.1):
+            try:
+                self.tracks.append(Mp3File(self.log, self.files[search_term], requester=requester))
+            except TrackError:
+                pass
 
 
     @property

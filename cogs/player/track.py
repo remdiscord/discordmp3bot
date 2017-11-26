@@ -60,7 +60,12 @@ class Mp3File(Track):
 
         self.file = file
         self.filename = self.file.encode("utf-8", 'ignore')
-        mp3_file = MP3(self.file)
+
+        try:
+            mp3_file = MP3(self.file)
+        except MutagenError:
+            self.log.error(f"Failed to load track {self.filename}")
+            raise TrackError("Unable to find file")
         
 
         tags = [
