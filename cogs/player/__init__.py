@@ -141,7 +141,11 @@ class Player:
 
             # listen for reaction result
             def check(reaction, user):
-                return user == ctx.author and reaction.emoji in vote_reaction_emojis[:len(search.tracks)]
+                return all([
+                    user == ctx.author,
+                    reaction.message.id == result_message.id,
+                    reaction.emoji in vote_reaction_emojis[:len(search.tracks)]
+                ])
             try:
                 reaction, user = await self.bot.wait_for('reaction_add', timeout=60, check=check)
             except asyncio.TimeoutError:

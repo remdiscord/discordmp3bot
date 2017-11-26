@@ -90,12 +90,23 @@ class YoutubeSearch(Search):
 
         search_reponse = youtube_client.search().list(
             q=search_query,
-            part="id,snippet",
-            maxResults=10
+            part="snippet",
+            maxResults=7
+        ).execute()
+
+        videos = list()
+        for search_result in search_reponse.get("items", []):
+            if search_result["id"]["kind"] == "youtube#video":
+                videos.append(search_result["id"]["videoId"])
+
+        search_reponse = youtube_client.videos().list(
+            part="snippet,contentDetails", 
+            id=','.join(videos)
         ).execute()
 
         for search_result in search_reponse.get("items", []):
-            if search_result["id"]["kind"] == "youtube#video":
+            length = int(re.search(r"(\d+)M", search_result["contentDetails"]["duration"]).groups()[0])
+            if length < 10:
                 self.tracks.append(YoutubeVideo(self.log, search_result, self.requester))
 
         self.tracks = self.tracks[:SEARCH_RESULT_LIMIT]

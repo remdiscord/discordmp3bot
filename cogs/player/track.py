@@ -131,7 +131,7 @@ class YoutubeVideo(Track):
 
         self.title = self.video["snippet"]["title"]
         self.creator = self.video["snippet"]["channelTitle"]
-        self.url = f"https://youtu.be/{self.video['id']['videoId']}"
+        self.url = f"https://youtu.be/{self.video['id']}"
         self.thumbnail = self.video["snippet"]["thumbnails"]["default"]["url"]
 
         self.requester = requester
