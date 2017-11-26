@@ -197,7 +197,7 @@ class Player:
     async def player_get_queue(self, ctx):
         """Reteives the next 10 upcoming tracks."""
         session = self._get_session(ctx)
-        embed = discord.Embed(title=f"{self.bot.user.name} Playlist - Upcoming songs:", description="", colour=0x004d40)
+        embed = discord.Embed(title=f"{self.bot.user.name} Playlist for {ctx.guild.name} - Upcoming songs:", description="", colour=0x004d40)
         
         for track in session.playlist.queue:
             embed.add_field(**track.queue, inline=False)
