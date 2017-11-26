@@ -310,21 +310,18 @@ class Player:
             if isinstance(error, commands.CheckFailure):
                 check = next(check for check in ctx.command.checks if not check(ctx))
 
-                if check == self.__class__._is_guild:
-                    error = "You must be in a server to use this command..."
-                elif check == self.__class__._is_session:
-                    error = "There is currently no player running on this server..."
-                elif check == self.__class__._no_session:
-                    error = "There is currently a player running on this server..."
-                elif check == self.__class__._is_listening:
-                    error = "You are currently not listening to the player..."
-                elif check == self.__class__._has_permission:
-                    error = "You do not have permission to use this command..."
-                elif check == self.__class__._is_admin:
-                    error = "You must be an administrator to use this command..."
+                checks = {
+                    self.__class__._is_guild: "You must be in a server to use this command...",
+                    self.__class__._is_session: "There is currently no player running on this server...",
+                    self.__class__._is_listening: "You are currently not listening to the player...",
+                    self.__class__._has_permission: "You do not have permission to use this command...",
+                    self.__class__._is_admin: "You must be an administrator to use this command...",
+                }
 
-                e = discord.Embed(title=error, description=f"for more information type `{ctx.prefix}help {ctx.command.name}`.", colour=0xe57a80)
-                e.set_author(name=f"Error: {ctx.command.name}", icon_url=ctx.bot.user.avatar_url)
+                error = checks.get(check, None)
+                if error:
+                    e = discord.Embed(title=error, description=f"for more information type `{ctx.prefix}help {ctx.command.name}`.", colour=0xe57a80)
+                    e.set_author(name=f"Error: {ctx.command.name}", icon_url=ctx.bot.user.avatar_url)
 
                 await ctx.send(embed=e)
 
