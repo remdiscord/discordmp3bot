@@ -112,8 +112,10 @@ class Mp3File(Track):
 
     @property
     def queue(self):
-        return f"{self.artist}: {self.album} - ({self.date})"
-
+        return {
+            "title": self.title
+            "value": f"{self.artist}: {self.album} - ({self.date})"
+        }
 # - Youtube Video
 
 class YoutubeVideo(Track):
@@ -156,7 +158,10 @@ class YoutubeVideo(Track):
 
     @property
     def queue(self):
-        return f"{self.creator} - requested by - {self.requester.name}"
+        return {
+            "title": self.title
+            "value": f"{self.creator} - requested by - {self.requester.name}"
+        }
 
 # - Soundcloud track
 
@@ -199,4 +204,7 @@ class SoundCloudTrack(Track):
 
     @property
     def queue(self):
-        return f"{self.creator} - requested by - {self.requester.name}"
+        return {
+            "title": self.title
+            "value": f"{self.creator} - requested by - {self.requester.name}"
+        }

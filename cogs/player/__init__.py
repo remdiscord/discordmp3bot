@@ -75,10 +75,14 @@ class Player:
     @commands.check(_is_listening)
     @commands.check(_has_permission)
     async def player_skip_track(self, ctx):
-        """Skip the currently playing track."""
+        """Skip the currently playing track.
+        
+        In order to skip a track more than half of the current listeners must vote to skip.
+        """
         try:
             session = self._get_session(ctx)
             listeners = session.listeners
+
             session.skip_requests = list(set(listeners) & set(session.skip_requests))
             count_needed = len(listeners) // 2 + 1
 
@@ -101,7 +105,7 @@ class Player:
             else:
                 e = discord.Embed(title="Skip track request", description=f"you currently need **{count_needed - len(session.skip_requests)}** more votes to skip this track.", colour=0x004d40)
 
-            e.set_author(name=f"Skip request - requested by: {session.skip_requests[0].name}", icon_url=session.skip_requests[0].avatar_url)
+            e.set_author(name=f"Skip request - requested by: {ctx.author.name}", icon_url=ctx.author.avatar_url)
             await ctx.send(embed=e)
 
         except Exception as e:
@@ -113,7 +117,15 @@ class Player:
     @commands.check(_is_listening)
     @commands.check(_has_permission)
     async def player_request(self, ctx, search_type:SearchConverter, *, query:str=None):
-        """Adds a specified request to the queue."""
+        """Adds a specified request to the queue.
+        
+        Avaliable search types include:
+        ```yaml
+        MP3:        Search through the local song playlist
+        YouTube:    Search for videos on YouTube
+        SoundCloud: Search for songs on SoundCloud
+        ```
+        """
         await ctx.trigger_typing()
 
         session = self._get_session(ctx)
@@ -152,7 +164,11 @@ class Player:
     @commands.check(_is_listening)
     @commands.check(_has_permission)
     async def player_set_volume(self, ctx, volume:float=None):
-        """Sets the volume."""
+        """Sets the player volume.
+        
+        Play volume can be set between 0 and 1
+        The defaule volume is 0.15
+        """
         session = self._get_session(ctx)
         if volume is None or not 0 <= volume <= 1:
             session.change_volume(DEFAULT_VOLUME)
@@ -170,7 +186,7 @@ class Player:
     @commands.check(_is_guild)
     @commands.check(_is_session)
     async def player_get_current_track(self, ctx):
-        """Display's the currently playing track"""
+        """Display's the currently playing track."""
         session = self._get_session(ctx)
         await ctx.send(**session.current_track.playing_embed)
 
@@ -182,8 +198,9 @@ class Player:
         """Reteives the next 10 upcoming tracks."""
         session = self._get_session(ctx)
         embed = discord.Embed(title=f"{self.bot.user.name} Playlist - Upcoming songs:", description="", colour=0x004d40)
+        
         for track in session.playlist.queue:
-            embed.add_field(name=track.title, value=track.queue, inline=False)
+            embed.add_field(**track.queue, inline=False)
 
         await ctx.send(embed=embed)
 
