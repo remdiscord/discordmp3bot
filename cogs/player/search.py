@@ -105,8 +105,8 @@ class YoutubeSearch(Search):
         ).execute()
 
         for search_result in search_reponse.get("items", []):
-            length = int(re.search(r"(\d+)M", search_result["contentDetails"]["duration"]).groups()[0])
-            if length < 10:
+            length = re.search(r"(\d+)M", search_result["contentDetails"]["duration"])
+            if length is None or int(length.groups()[0]) < 10:
                 self.tracks.append(YoutubeVideo(self.log, search_result, self.requester))
 
         self.tracks = self.tracks[:SEARCH_RESULT_LIMIT]
