@@ -131,6 +131,17 @@ class Player:
         session = self._get_session(ctx)
         vote_reaction_emojis = [(str(i).encode("utf-8") + b"\xe2\x83\xa3").decode("utf-8") for i in range(1,9)]
 
+        count = 0
+        for track in session.playlist.requests:
+            if request.requester == ctx.author:
+                embed = discord.Embed(title="Your request cannot be processed", description=f"You can only request up-to two songs in advance...\nFor more information type `{ctx.prefix}help {ctx.command.name}`.", colour=0xe57a80)
+                embed.set_author(name=f"Error: {ctx.command.name}", icon_url=ctx.bot.user.avatar_url)
+                count += 1
+
+        if count > 2:
+            return 
+
+
         try:
             search = search_type(self.bot.log, query, ctx.author)
             
@@ -161,6 +172,7 @@ class Player:
             self.bot.log.error(type(e).__name__ + ': ' + str(e))
             embed = discord.Embed(title="There was an error processing your request...", description=f"{e}\nFor more information type `{ctx.prefix}help {ctx.command.name}`.", colour=0xe57a80)
             embed.set_author(name=f"Error: {ctx.command.name}", icon_url=ctx.bot.user.avatar_url)
+            await ctx.send(embed=e)
 
     @commands.command(name="volume")
     @commands.check(_is_guild)
