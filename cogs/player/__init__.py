@@ -131,14 +131,10 @@ class Player:
         session = self._get_session(ctx)
         vote_reaction_emojis = [(str(i).encode("utf-8") + b"\xe2\x83\xa3").decode("utf-8") for i in range(1,9)]
 
-        count = 0
-        for track in session.playlist.requests:
-            if request.requester == ctx.author:
-                embed = discord.Embed(title="Your request cannot be processed", description=f"You can only request up-to two songs in advance...\nFor more information type `{ctx.prefix}help {ctx.command.name}`.", colour=0xe57a80)
-                embed.set_author(name=f"Error: {ctx.command.name}", icon_url=ctx.bot.user.avatar_url)
-                count += 1
-
-        if count > 2:
+        if len([track for track in session.playlist.requests if track.requester == ctx.author]) > 1:
+            embed = discord.Embed(title="Your request cannot be processed", description=f"You can only request up-to two songs in advance...\nFor more information type `{ctx.prefix}help {ctx.command.name}`.", colour=0xe57a80)
+            embed.set_author(name=f"Error: {ctx.command.name}", icon_url=ctx.bot.user.avatar_url)
+            await ctx.send(embed=embed)
             return 
 
 
