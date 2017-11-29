@@ -113,7 +113,7 @@ class Session:
         self.current_track = track
         
         # Log track to log_channel
-        if self.log_channel:
+        if self.log_channel and self.is_playing:
             await self.log_channel.send(**self.current_track.playing_embed)
         
         player = discord.PCMVolumeTransformer(self.current_track.player, self.volume)
