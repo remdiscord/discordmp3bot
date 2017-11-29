@@ -209,7 +209,7 @@ class Player:
     @commands.check(_is_guild)
     @commands.check(_is_session)
     async def player_get_current_track(self, ctx):
-        """Display's the currently playing track."""
+        """Displays the currently playing track."""
         session = self._get_session(ctx)
         await ctx.send(**session.current_track.playing_embed)
 
@@ -218,7 +218,7 @@ class Player:
     @commands.check(_is_guild)
     @commands.check(_is_session)
     async def player_get_queue(self, ctx):
-        """Reteives the next 10 upcoming tracks."""
+        """Retrieves the next 10 upcoming tracks."""
         session = self._get_session(ctx)
         embed = discord.Embed(title=f"{self.bot.user.name} Playlist for {ctx.guild.name} - Upcoming songs:", description="", colour=0x004d40)
         
