@@ -21,7 +21,7 @@ bot_config = {
     'self_bot': IS_SELFBOT,
     'status': discord.Status.online,
     'owner_id': OWNER_ID,
-    'fetch_offline_members': True
+    'fetch_offline_members': False
 }
 bot = commands.Bot(**bot_config)
 
