@@ -75,41 +75,52 @@ class Player:
     @commands.check(_is_listening)
     @commands.check(_has_permission)
     async def player_skip_track(self, ctx):
-        """Skip the currently playing track.
+        """Skips the currently playing track.
         
         In order to skip a track more than half of the current listeners must vote to skip.
         """
-        try:
-            session = self._get_session(ctx)
-            listeners = session.listeners
+        session = self._get_session(ctx)
+        listeners = session.listeners
 
-            session.skip_requests = list(set(listeners) & set(session.skip_requests))
-            count_needed = len(listeners) // 2 + 1
+        session.skip_requests = list(set(listeners) & set(session.skip_requests))
+        count_needed = len(listeners) // 2 + 1
 
-            # if already skipped
-            if ctx.author in session.skip_requests:
-                e = discord.Embed(title="Skip track request", description="you have already skipped...", colour=0xe57a80)
-            else:
-                session.skip_requests.append(ctx.author)
+        # if already skipped
+        if ctx.author in session.skip_requests:
+            e = discord.Embed(title="Skip track request", description="you have already skipped...", colour=0xe57a80)
+        else:
+            session.skip_requests.append(ctx.author)
 
-            # if enough requests or listener alone
-            if len(session.skip_requests) >= count_needed or len(listeners) == 1:
-                e = discord.Embed(title="Skip track request", description="Skipping track...", colour=0x004d40)
-                session.voice.stop()
+        # if enough requests or listener alone
+        if len(session.skip_requests) >= count_needed or len(listeners) == 1:
+            e = discord.Embed(title="Skip track request", description="Skipping track...", colour=0x004d40)
+            session.voice.stop()
 
-            # if no-one has requested
-            elif len(session.skip_requests) == 0:
-                e = discord.Embed(title="Skip track request initiated...", description=f"you currently need **{count_needed - len(session.skip_requests)}** more votes to skip this track.", colour=0x004d40)
+        # if no-one has requested
+        elif len(session.skip_requests) == 0:
+            e = discord.Embed(title="Skip track request initiated...", description=f"you currently need **{count_needed - len(session.skip_requests)}** more votes to skip this track.", colour=0x004d40)
 
-            # otherwise show how many requests are required
-            else:
-                e = discord.Embed(title="Skip track request", description=f"you currently need **{count_needed - len(session.skip_requests)}** more votes to skip this track.", colour=0x004d40)
+        # otherwise show how many requests are required
+        else:
+            e = discord.Embed(title="Skip track request", description=f"you currently need **{count_needed - len(session.skip_requests)}** more votes to skip this track.", colour=0x004d40)
 
-            e.set_author(name=f"Skip request - requested by: {ctx.author.name}", icon_url=ctx.author.avatar_url)
-            await ctx.send(embed=e)
+        e.set_author(name=f"Skip request - requested by: {ctx.author.name}", icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=e)
 
-        except Exception as e:
-            self.bot.log.error(type(e).__name__ + ': ' + str(e))
+    @commands.command(name="force_skip")
+    @commands.check(_is_guild)
+    @commands.check(_is_session)
+    @commands.check(_is_admin)
+    async def player_force_skip_track(self, ctx):
+        """Force Skips the currently playing track."""
+        session = self._get_session(ctx)
+
+        e = discord.Embed(title="Skip track request", description="Skipping track...", colour=0x004d40)
+        e.set_author(name=f"Skip request - requested by: {ctx.author.name}", icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=e)
+
+        session.voice.stop()
+
 
     @commands.command(name="request")
     @commands.check(_is_guild)
@@ -273,10 +284,28 @@ class Player:
         session.stop()
         del self.sessions[ctx.guild.id]
 
-        embed = discord.Embed(title="Stopping Player...", description="stopping...", colour=0x004d40)
-        embed.set_author(name=f"Player Stop - requested by: {ctx.author.name}", icon_url=ctx.author.avatar_url)
-        await ctx.send(embed=embed)
+    @commands.command(name="restart_player")
+    @commands.check(_is_guild)
+    @commands.check(_is_session)
+    @commands.check(_is_admin)
+    async def player_restart_session(self, ctx):
+        """Restarts the player in the current guild."""
+        old_session = self._get_session(ctx)
+        old_session.stop()
 
+        embed = discord.Embed(title="Restarting Player...", description="restarting...", colour=0x004d40)
+        embed.set_author(name=f"Player Restart - requested by: {ctx.author.name}", icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=embed)
+        
+        session_config = {
+            "bot": self.bot,
+            "voice": await old_session.voice.channel.connect(),
+            "log_channel": old_session.log_channel,
+            "playlist": old_session.playlist,
+            "permissions": old_session.permissions
+        }
+        
+        self.sessions[session_config["voice"].guild.id] = Session(**session_config)
 
     async def on_ready(self):
         for session in INITIAL_SESSIONS: # Start Inital player sessions
