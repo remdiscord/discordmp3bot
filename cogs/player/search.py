@@ -57,7 +57,7 @@ class Mp3FileSearch(Search):
             search_term = re.sub(r"[^A-z\s]", '', search_term.lower())
             self.files[search_term] = filename
 
-        for search_term in difflib.get_close_matches(re.sub(r"[^A-z]", '', self.search_query.lower()), self.files, n=SEARCH_RESULT_LIMIT, cutoff=0.1):
+        for search_term in difflib.get_close_matches(re.sub(r"[^A-z\s]", '', self.search_query.lower()), self.files, n=SEARCH_RESULT_LIMIT, cutoff=0.1):
             try:
                 self.tracks.append(Mp3File(self.log, self.files[search_term], requester=requester))
             except TrackError:
