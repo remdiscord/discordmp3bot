@@ -91,8 +91,8 @@ class Player:
         else:
             session.skip_requests.append(ctx.author)
 
-        # if enough requests or listener alone
-        if len(session.skip_requests) >= count_needed or len(listeners) == 1:
+        # if enough requests, listener alone or requester
+        if len(session.skip_requests) >= count_needed or len(listeners) == 1 or session.current_track.requester == ctx.author:
             e = discord.Embed(title="Skip track request", description="Skipping track...", colour=0x004d40)
             session.voice.stop()
 
@@ -135,6 +135,7 @@ class Player:
         MP3:        Search through the local song playlist
         YouTube:    Search for videos on YouTube
         SoundCloud: Search for songs on SoundCloud
+        Clyp:       Play track from Clyp given a URL or ID
         ```
         """
         await ctx.trigger_typing()

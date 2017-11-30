@@ -9,6 +9,7 @@ Copyright (c) 2017 Joshua Butt
 
 import difflib
 import re
+import requests
 
 from glob import glob
 
@@ -160,8 +161,43 @@ class SoundCloudSearch(Search):
         }
 
 
+class ClypSearch(Search):
+    """Class containing search configuration for Clyp"""
+    def __init__(self, log, search_query, requester):
+        self.log = log
+        self.search_query = search_query
+        self.requester = requester
+
+        track = re.search(r"(?:(?:clyp\.it\/)|^)([A-z\d]+)(?:$|\#)", search_query)
+        if track is None:
+            raise SearchError("Unable to find clyp with given ID or URL")
+
+        self.track_id = track.groups()[0]
+
+        r = requests.get(url=f"https://api.clyp.it/{self.track_id}")
+
+        if r.status_code != 200:
+            raise SearchError("Unable to find clyp with given ID or URL")
+
+        self.tracks = [ClypTrack(self.log, r.json(), self.requester)]
+
+    @property
+    def search_embed(self):
+        track = f"{self.tracks[0].title}"
+
+        embed = discord.Embed(title=f"Results for search - Requested by {self.requester.name}", description=track, colour=0x009688)
+        embed.set_author(name=f"Clyp - Track ID: {self.track_id}", icon_url="attachment://clyp.png")
+
+        return {
+            "embed": embed, 
+            "file": discord.File(open(CLYP_LOGO_FILE, 'rb'), "clyp.png")
+        }
+
+        
+
 search_types = [
     (Mp3FileSearch, "mp3"),
     (YoutubeSearch, "youtube"),
-    (SoundCloudSearch, "soundcloud")
+    (SoundCloudSearch, "soundcloud"),
+    (ClypSearch, "clyp")
 ]

@@ -18,6 +18,7 @@ __all__ = [
     'Mp3File',
     'YoutubeVideo',
     'SoundCloudTrack',
+    'ClypTrack',
 
     'TrackError'
 ]
@@ -171,7 +172,7 @@ class YoutubeVideo(Track):
 # - Soundcloud track
 
 class SoundCloudTrack(Track):
-    """Class containing metadata for a YouTube video"""
+    """Class containing metadata for a SoundCloud Track"""
     def __init__(self, log, track, requester):
 
         self.track = track
@@ -212,4 +213,49 @@ class SoundCloudTrack(Track):
         return {
             "name": self.title,
             "value": f"{self.creator} - requested by - {self.requester.name}"
+        }
+
+# - Clyp track
+
+class ClypTrack(Track):
+    """Class containing metadata for a Clyp Track"""
+    def __init__(self, log, track, requester):
+
+        self.track = track
+
+        self.title = self.track["Title"]
+        self.url = f"https://clyp.it/{self.track['AudioFileId']}"
+        self.thumbnail = self.track["ArtworkPictureUrl"]
+
+        self.requester = requester
+
+    @property
+    def player(self):
+        return discord.FFmpegPCMAudio(self.track["Mp3Url"], options="-bufsize 7680k")
+
+    @property
+    def request_embed(self):
+        embed = discord.Embed(title="Clyp track request...", description=f"adding **{self.title}** to the queue...", colour=0x009688)
+        embed.set_author(name=f"Clyp - requested by {self.requester.name}", url=self.url, icon_url="attachment://clyp.png")
+        embed.set_thumbnail(url=self.thumbnail)
+        return {
+            "embed": embed, 
+            "file": discord.File(open(CLYP_LOGO_FILE, 'rb'), "clyp.png")
+        }
+
+    @property
+    def playing_embed(self):
+        embed = discord.Embed(title=self.title, colour=0x009688)
+        embed.set_author(name=f"Clyp Track - requested by {self.requester.name}", url=self.url, icon_url="attachment://clyp.png")
+        embed.set_thumbnail(url=self.thumbnail)
+        return {
+            "embed": embed, 
+            "file": discord.File(open(CLYP_LOGO_FILE, 'rb'), "clyp.png")
+        }
+
+    @property
+    def queue(self):
+        return {
+            "name": self.title,
+            "value": f"requested by - {self.requester.name}"
         }
