@@ -180,7 +180,7 @@ class SoundCloudTrack(Track):
         self.title = self.track.title
         self.creator = self.track.user["username"]
         self.url = self.track.permalink_url
-        self.thumbnail = self.track.artwork_url
+        self.thumbnail = self.track.artwork_url or None
 
         self.requester = requester
 
@@ -192,7 +192,8 @@ class SoundCloudTrack(Track):
     def request_embed(self):
         embed = discord.Embed(title="Soundcloud track request...", description=f"adding **{self.title}** by **{self.creator}** to the queue...", colour=0xff9800)
         embed.set_author(name=f"SoundCloud Track - requested by {self.requester.name}", url=self.url, icon_url="attachment://soundcloud.png")
-        embed.set_thumbnail(url=self.thumbnail)
+        if self.thumbnail:
+            embed.set_thumbnail(url=self.thumbnail)
         return {
             "embed": embed, 
             "file": discord.File(open(SOUNDCLOUD_LOGO_FILE, 'rb'), "soundcloud.png")
@@ -202,7 +203,8 @@ class SoundCloudTrack(Track):
     def playing_embed(self):
         embed = discord.Embed(title=self.title, description=self.creator, colour=0xff9800)
         embed.set_author(name=f"SoundCloud Track - requested by {self.requester.name}", url=self.url, icon_url="attachment://soundcloud.png")
-        embed.set_thumbnail(url=self.thumbnail)
+        if self.thumbnail:
+            embed.set_thumbnail(url=self.thumbnail)
         return {
             "embed": embed, 
             "file": discord.File(open(SOUNDCLOUD_LOGO_FILE, 'rb'), "soundcloud.png")
@@ -238,7 +240,8 @@ class ClypTrack(Track):
     def request_embed(self):
         embed = discord.Embed(title="Clyp track request...", description=f"adding **{self.title}** to the queue...", colour=0x009688)
         embed.set_author(name=f"Clyp - requested by {self.requester.name}", url=self.url, icon_url="attachment://clyp.png")
-        embed.set_thumbnail(url=self.thumbnail)
+        if self.thumbnail:
+            embed.set_thumbnail(url=self.thumbnail)
         return {
             "embed": embed, 
             "file": discord.File(open(CLYP_LOGO_FILE, 'rb'), "clyp.png")
@@ -248,7 +251,8 @@ class ClypTrack(Track):
     def playing_embed(self):
         embed = discord.Embed(title=self.title, colour=0x009688)
         embed.set_author(name=f"Clyp Track - requested by {self.requester.name}", url=self.url, icon_url="attachment://clyp.png")
-        embed.set_thumbnail(url=self.thumbnail)
+        if self.thumbnail:
+            embed.set_thumbnail(url=self.thumbnail)
         return {
             "embed": embed, 
             "file": discord.File(open(CLYP_LOGO_FILE, 'rb'), "clyp.png")
