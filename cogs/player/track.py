@@ -240,7 +240,7 @@ class ClypTrack(Track):
     def request_embed(self):
         embed = discord.Embed(title="Clyp track request...", description=f"adding **{self.title}** to the queue...", colour=0x009688)
         embed.set_author(name=f"Clyp - requested by {self.requester.name}", url=self.url, icon_url="attachment://clyp.png")
-        if self.thumbnail:
+        if self.thumbnail is not None:
             embed.set_thumbnail(url=self.thumbnail)
         return {
             "embed": embed, 
@@ -251,7 +251,7 @@ class ClypTrack(Track):
     def playing_embed(self):
         embed = discord.Embed(title=self.title, colour=0x009688)
         embed.set_author(name=f"Clyp Track - requested by {self.requester.name}", url=self.url, icon_url="attachment://clyp.png")
-        if self.thumbnail:
+        if self.thumbnail is not None:
             embed.set_thumbnail(url=self.thumbnail)
         return {
             "embed": embed, 
