@@ -225,7 +225,8 @@ class ClypTrack(Track):
 
         self.title = self.track["Title"]
         self.url = f"https://clyp.it/{self.track['AudioFileId']}"
-        self.thumbnail = self.track["ArtworkPictureUrl"]
+
+        self.thumbnail = self.track.get("ArtworkPictureUrl", None)
 
         self.requester = requester
 

@@ -35,6 +35,7 @@ class SearchConverter(commands.Converter):
         return result
 
 class Player:
+    """MP3 and Requests Player"""
     def __init__(self, bot):
         self.bot = bot
         self.sessions = dict()
@@ -179,8 +180,11 @@ class Player:
         except Exception as e:
             self.bot.log.error(type(e).__name__ + ': ' + str(e))
             embed = discord.Embed(title="There was an error processing your request...", description=f"{e}\nFor more information type `{ctx.prefix}help {ctx.command.name}`.", colour=0xe57a80)
-            embed.set_author(name=f"Error: {ctx.command.name}", icon_url=ctx.bot.user.avatar_url)
-            await ctx.send(embed=e)
+            embed.set_author(name=f"Error: {ctx.command.name}", icon_url=self.bot.user.avatar_url)
+            await ctx.send(embed=embed)
+
+    
+
 
     @commands.command(name="volume")
     @commands.check(_is_guild)
@@ -284,6 +288,7 @@ class Player:
         session = self._get_session(ctx)
         session.stop()
         del self.sessions[ctx.guild.id]
+
 
     @commands.command(name="restart_player")
     @commands.check(_is_guild)
