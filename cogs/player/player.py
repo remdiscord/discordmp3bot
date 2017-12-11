@@ -60,9 +60,12 @@ class Playlist:
         self.playlist.append(self._get_new_track)
         return self.playlist.pop(0)
 
-    def add_request(self, request):
+    def add_request(self, request, *, front=False):
         """Adds the requested song to the playlist"""
-        self.requests.append(request)
+        if front:
+            self.requests.insert(0, request)
+        else:
+            self.requests.append(request)
 
 
 class Session:
@@ -80,6 +83,7 @@ class Session:
         self.current_track = None
         
         self.skip_requests = list()
+        self.repeat_requests = list()
         self.volume = DEFAULT_VOLUME
 
         self.play_next_song = asyncio.Event()

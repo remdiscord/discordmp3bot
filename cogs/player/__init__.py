@@ -30,7 +30,7 @@ class SearchConverter(commands.Converter):
                 break
 
         if not issubclass(result, Search):
-            raise commands.BadArgument(F'Search Type "{argument}" not found.')
+            raise commands.BadArgument(f'Search Type "{argument}" not found.')
 
         return result
 
@@ -88,7 +88,7 @@ class Player:
 
         # if already skipped
         if ctx.author in session.skip_requests:
-            e = discord.Embed(title="Skip track request", description="you have already skipped...", colour=0xe57a80)
+            e = discord.Embed(title="Skip track request", description="you have already requested to skip...", colour=0xe57a80)
         else:
             session.skip_requests.append(ctx.author)
 
@@ -121,6 +121,60 @@ class Player:
         await ctx.send(embed=e)
 
         session.voice.stop()
+
+
+    @commands.command(name="repeat")
+    @commands.check(_is_guild)
+    @commands.check(_is_session)
+    @commands.check(_is_listening)
+    @commands.check(_has_permission)
+    async def player_repeat_track(self, ctx):
+        """Repeats the currently playing track.
+
+        In order to repear a track more than half of the current listeners must vote to repeat.
+        """
+        session = self._get_session(ctx)
+        listeners = session.listeners
+
+        session.repeat_requests = list(set(listeners) & set(session.repeat_requests))
+        count_needed = len(listeners) // 2 + 1
+
+        # if already skipped
+        if ctx.author in session.repeat_requests:
+            e = discord.Embed(title="Repeat track request", description="you have already requested to repeat...", colour=0xe57a80)
+        else:
+            session.repeat_requests.append(ctx.author)
+
+        # if enough requests, listener alone or requester
+        if len(session.repeat_requests) >= count_needed or len(listeners) == 1 or session.current_track.requester == ctx.author:
+            e = discord.Embed(title="Repeat track request", description="Repeat track...", colour=0x004d40)
+            session.playlist.add_request(session.current_track, front=True)
+
+        # if no-one has requested
+        elif len(session.repeat_requests) == 0:
+            e = discord.Embed(title="Repeat track request initiated...", description=f"you currently need **{count_needed - len(session.repeat_requests)}** more votes to repeat this track.", colour=0x004d40)
+
+        # otherwise show how many requests are required
+        else:
+            e = discord.Embed(title="Repeat track request", description=f"you currently need **{count_needed - len(session.repeat_requests)}** more votes to repeat this track.", colour=0x004d40)
+
+        e.set_author(name=f"Repeat request - requested by: {ctx.author.name}", icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=e)
+        
+
+    @commands.command(name="force_repeat")
+    @commands.check(_is_guild)
+    @commands.check(_is_session)
+    @commands.check(_is_admin)
+    async def player_force_repeat_track(self, ctx):
+        """Force Repeats the currently playing track."""
+        session = self._get_session(ctx)
+
+        e = discord.Embed(title="Repeat track request", description="Repeating track...", colour=0x004d40)
+        e.set_author(name=f"Repeat request - requested by: {ctx.author.name}", icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=e)
+
+        session.playlist.add_request(session.current_track, front=True)
 
 
     @commands.command(name="request")
@@ -184,8 +238,6 @@ class Player:
             await ctx.send(embed=embed)
 
     
-
-
     @commands.command(name="volume")
     @commands.check(_is_guild)
     @commands.check(_is_session)

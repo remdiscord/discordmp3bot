@@ -36,6 +36,7 @@ class SearchError(Exception):
     """"""
     pass
 
+
 class Search:
     """Base class for various audio track types"""
 
@@ -43,6 +44,7 @@ class Search:
     def search_embed(self):
         """Returns an instance of :class:`discord.Embed`"""
         raise NotImplementedError
+
 
 class Mp3FileSearch(Search):
     def __init__(self, log, search_query, requester):
@@ -77,6 +79,7 @@ class Mp3FileSearch(Search):
         return {
             "embed": embed
         }
+
 
 youtube_client = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=YOUTUBE_CLIENT_ID)
 
@@ -193,7 +196,7 @@ class ClypSearch(Search):
             "file": discord.File(open(CLYP_LOGO_FILE, 'rb'), "clyp.png")
         }
 
-        
+
 
 search_types = [
     (Mp3FileSearch, "mp3"),

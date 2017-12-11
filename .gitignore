@@ -1,7 +1,9 @@
-secrets.py
 .vscode
 *.pyc
 *.log
+
+secrets.py
+
 lib/mp3/*
 
 cogs/player/startup.json

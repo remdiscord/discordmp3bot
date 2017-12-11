@@ -50,6 +50,33 @@ async def on_ready():
 | Guilds: {len(bot.guilds)}
 # -------------------------------------#""")
 
+@bot.event
+async def on_command_error(ctx, e):
+    bot.log.error(f"{type(e).__name__}: {e}")
+
+    if DEBUG:
+        ignored_exceptions = [
+            commands.MissingRequiredArgument,
+            commands.CommandNotFound,
+            commands.DisabledCommand,
+            commands.BadArgument,
+            commands.NoPrivateMessage,
+            commands.CheckFailure,
+            commands.CommandOnCooldown,
+            commands.MissingPermissions
+        ]
+
+        if any([isinstance(e, exception) for exception in ignored_exceptions]):
+            return
+
+        e = discord.Embed(
+            title=f"Error With command: {ctx.command.name}",
+            description=f"```py\n{type(e).__name__}: {e}\n```\n\nContext:\n\tChannel: <#{ctx.channel.id}>\n\tAuthor: <@{ctx.author.id}>",
+            timestamp=ctx.message.created_at
+        )
+        await bot.owner.send(embed=e)
+
+
 if __name__ == "__main__":
     for cog in INITIAL_COGS:
         try:
