@@ -131,7 +131,7 @@ class Player:
     async def player_repeat_track(self, ctx):
         """Repeats the currently playing track.
 
-        In order to repear a track more than half of the current listeners must vote to repeat.
+        In order to repeat a track more than half of the current listeners must vote to repeat.
         """
         session = self._get_session(ctx)
         listeners = session.listeners
@@ -160,7 +160,7 @@ class Player:
 
         e.set_author(name=f"Repeat request - requested by: {ctx.author.name}", icon_url=ctx.author.avatar_url)
         await ctx.send(embed=e)
-        
+
 
     @commands.command(name="force_repeat")
     @commands.check(_is_guild)
