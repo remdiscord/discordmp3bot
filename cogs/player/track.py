@@ -79,8 +79,12 @@ class Mp3File(Track):
             try:
                 setattr(self, var, mp3_file.tags[tag][0])
             except KeyError:
-                self.log.warning(f"Failed to find {var} for {self.filename}")
-                setattr(self, var, "???")
+                self.log.warning(f"Failed to find {var} for {self.filename} perhaps you have no ID3 tags populated")
+                if var == 'title':
+                    setattr(self, var, self.file.rsplit('/',1)[1][:4])
+                else:
+                    setattr(self, var, "???")
+
             except TypeError:
                 self.log.error(f"Failed to load track {self.filename}")
                 raise TrackError("Possibly corrupt MP3 tag")

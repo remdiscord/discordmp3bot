@@ -383,7 +383,13 @@ class Player:
                 if session.get("permissions", None):
                     permissions = dict()
                     for command, role_id in session["permissions"].items():
-                        permissions[command] = next(role for role in session_config["voice"].guild.roles if role.id == role_id)
+                    
+                        try:
+                            permissions[command] = next(role for role in session_config["voice"].guild.roles if role.id == role_id)
+                        except StopIteration as e:
+                            self.bot.error.log(f"Invalid Role ID assigned for permission: {command}")
+                            raise e
+                    
                     session_config["permissions"] = permissions
                 else:
                     permissions = None

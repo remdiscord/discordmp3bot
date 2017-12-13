@@ -13,7 +13,7 @@ from secrets import TOKEN, OWNER_ID
 APP_NAME = "mp3bot"
 
 # Bot Debug toggle
-DEBUG = True
+DEBUG = False
 
 # Is bot a selfbot
 IS_SELFBOT = False

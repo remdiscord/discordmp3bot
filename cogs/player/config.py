@@ -33,7 +33,7 @@ INITIAL_SESSIONS = json.load(open(SESSIONS_FILE))
 # Config for search
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
-YOUTUBE_CLIENT_ID = "AIzaSyAy0v_6O8mynKHUpPc40fds7Q7M29c749E"
+YOUTUBE_CLIENT_ID = "AIzaSyAy0v_6O8mynKHUpPc40fs7Q7M29c749E" # - Make sure you generate you're own ID for your bot
 
 SOUNDCLOUD_CLIENT_ID = "a3e059563d7fd3372b49b37f00a00bcf"
 

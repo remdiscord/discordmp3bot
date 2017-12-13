@@ -118,8 +118,12 @@ class Session:
         
         # Log track to log_channel
         if self.log_channel and self.is_playing:
-            await self.log_channel.send(**self.current_track.playing_embed)
-        
+            try:
+                await self.log_channel.send(**self.current_track.playing_embed)
+            except discord.Forbidden as e:
+                self.bot.log.error("Failed to log current track to log_channel")
+                self.bot.log.error(f"{type(e).__name__}: {e}")
+
         player = discord.PCMVolumeTransformer(self.current_track.player, self.volume)
         self.voice.play(source=player, after=self._toggle_next)
 

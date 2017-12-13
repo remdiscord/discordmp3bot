@@ -91,33 +91,39 @@ class YoutubeSearch(Search):
         self.search_query = search_query
         self.requester = requester
         self.tracks = list()
+        
+        try:
+            search_reponse = youtube_client.search().list(
+                q=search_query,
+                part="snippet",
+                maxResults=7
+            ).execute()
 
-        search_reponse = youtube_client.search().list(
-            q=search_query,
-            part="snippet",
-            maxResults=7
-        ).execute()
+            videos = list()
+            for search_result in search_reponse.get("items", []):
+                if search_result["id"]["kind"] == "youtube#video":
+                    videos.append(search_result["id"]["videoId"])
 
-        videos = list()
-        for search_result in search_reponse.get("items", []):
-            if search_result["id"]["kind"] == "youtube#video":
-                videos.append(search_result["id"]["videoId"])
+            search_reponse = youtube_client.videos().list(
+                part="snippet,contentDetails", 
+                id=','.join(videos)
+            ).execute()
 
-        search_reponse = youtube_client.videos().list(
-            part="snippet,contentDetails", 
-            id=','.join(videos)
-        ).execute()
+            for search_result in search_reponse.get("items", []):
+                hour_length = re.search(r"(\d+)H", search_result["contentDetails"]["duration"])
+                if hour_length:
+                    continue
 
-        for search_result in search_reponse.get("items", []):
-            hour_length = re.search(r"(\d+)H", search_result["contentDetails"]["duration"])
-            if hour_length:
-                continue
+                minute_length = re.search(r"(\d+)M", search_result["contentDetails"]["duration"])
+                if minute_length is None or int(minute_length.groups()[0]) < 10:
+                    self.tracks.append(YoutubeVideo(self.log, search_result, self.requester))
 
-            minute_length = re.search(r"(\d+)M", search_result["contentDetails"]["duration"])
-            if minute_length is None or int(minute_length.groups()[0]) < 10:
-                self.tracks.append(YoutubeVideo(self.log, search_result, self.requester))
-
-        self.tracks = self.tracks[:SEARCH_RESULT_LIMIT]
+            self.tracks = self.tracks[:SEARCH_RESULT_LIMIT]
+        
+        except HttpError as e:
+            self.bot.log.error(f"Error querying youtube API, likely bad API key")
+            self.bot.log.error(f"{type(e).__name__}: {e}")
+            raise Exception("Error querying youtube API, likely bad API key")
 
     @property
     def search_embed(self):
