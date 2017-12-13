@@ -35,6 +35,12 @@ Usage
         }
     ]
 
+* ``voice_channel`` is a discord voice channel ID
+
+* ``log_channel`` is a discord text channel ID
+
+* subsets of ``permissions`` are discord server role IDs
+
 * ``playlist`` and ``permissions`` are optional
 
 2. create ``secrets.py``
