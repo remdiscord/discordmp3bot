@@ -55,7 +55,7 @@ async def on_command_error(ctx, e):
     bot.log.error(f"{type(e).__name__}: {e}")
 
     if DEBUG:
-        ignored_exceptions = [
+        ignored_exceptions = (
             commands.MissingRequiredArgument,
             commands.CommandNotFound,
             commands.DisabledCommand,
@@ -64,9 +64,9 @@ async def on_command_error(ctx, e):
             commands.CheckFailure,
             commands.CommandOnCooldown,
             commands.MissingPermissions
-        ]
+        )
 
-        if any([isinstance(e, exception) for exception in ignored_exceptions]):
+        if isinstance(e, ignored_exceptions):
             return
 
         e = discord.Embed(
