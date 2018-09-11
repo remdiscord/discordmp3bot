@@ -196,7 +196,6 @@ class Player:
 
     @commands.command(name="request")
     @commands.check(_is_guild)
-    @commands.check(_is_session)
     @commands.check(_has_permission)
     async def player_request(self, ctx, search_type: SearchConverter, *, query: str = None):
         """Adds a specified request to the queue.
