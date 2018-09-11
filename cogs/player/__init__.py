@@ -213,6 +213,14 @@ class Player:
         await ctx.trigger_typing()
 
         session = self._get_session(ctx)
+        if session is None:
+            if ctx.author.voice is not None:
+                voice = await ctx.author.voice.channel.connect()
+                session = Session(self.bot, self, voice, self)
+                self.sessions[ctx.guild] = session
+            else:
+                raise TrackError("You are not in a voice channel...")
+
         vote_reaction_emojis = [
             (str(i).encode("utf-8") + b"\xe2\x83\xa3").decode("utf-8") for i in range(1, 9)]
 
@@ -322,6 +330,7 @@ class Player:
         session_config = {
             "bot": self.bot,
             "voice": await voice_channel.connect(),
+            "cog": self,
             "log_channel": log_channel,
             "playlist": Playlist(self.bot.log)
         }
@@ -381,6 +390,7 @@ class Player:
         session_config = {
             "bot": self.bot,
             "voice": await old_session.voice.channel.connect(),
+            "cog": self,
             "log_channel": old_session.log_channel,
             "playlist": old_session.playlist,
             "permissions": old_session.permissions
@@ -396,6 +406,7 @@ class Player:
                 session_config = {
                     "bot": self.bot,
                     "voice": await self.bot.get_channel(session["voice_channel"]).connect(),
+                    "cog": self,
                     "log_channel": self.bot.get_channel(session["log_channel"])
                 }
 

@@ -70,16 +70,46 @@ class Playlist:
             self.requests.append(request)
 
 
+class RequestPlaylist:
+    """Request only playlist object"""
+
+    def __init__(self):
+        self.requests = list()
+
+    @property
+    def queue(self):
+        """Returns the next 10 items in the playlist queue"""
+        return self.requests[:10]
+
+    @property
+    def next_track(self):
+        """Returns the next track"""
+        if self.requests:
+            return self.requests.pop(0)
+        else:
+            return None
+
+    def add_request(self, request, *, front=False):
+        """Adds the requested song to the playlist"""
+        if front:
+            self.requests.insert(0, request)
+        else:
+            self.requests.append(request)
+
+
 class Session:
     """Discord MP3Player session"""
 
-    def __init__(self, bot, voice, log_channel, playlist, *, permissions=None):
+    def __init__(self, bot, cog, voice, log_channel, *, playlist=None, permissions=None):
 
         self.bot = bot
         self.voice = voice
+        self.cog = cog
+
+        self.guild = self.voice.guild
 
         self.log_channel = log_channel
-        self.playlist = playlist
+        self.playlist = playlist or RequestPlaylist()
         self.permissions = permissions or dict()
 
         self.is_playing = True
@@ -90,7 +120,9 @@ class Session:
         self.volume = DEFAULT_VOLUME
 
         self.play_next_song = asyncio.Event()
-        self.player = self.bot.loop.create_task(self._player_task())
+
+        if playlist:
+            self.player = self.bot.loop.create_task(self._player_task())
 
     @property
     def listeners(self):
@@ -98,6 +130,11 @@ class Session:
         listeners = [m for m in self.voice.channel.members if not (
             m.voice.self_deaf or m.voice.deaf)]
         return list(filter(self.voice.guild.me.__ne__, listeners))
+
+    def start(self):
+        """Starts the player"""
+        self.is_playing = True
+        self.player = self.bot.loop.create_task(self._player_task())
 
     def _toggle_next(self, error=None):
         """Plays the next song"""
@@ -147,7 +184,12 @@ class Session:
         """Player's asyncio loop"""
         while self.is_playing:
             self.play_next_song.clear()
-            await self._play_track(self.playlist.next_track)
-            await self.check_voice_state()
-            await self.play_next_song.wait()
+            next_track = self.playlist.next_track
+            if next_track is not None:
+                await self._play_track(next_track)
+                await self.check_voice_state()
+                await self.play_next_song.wait()
+            else:
+                self.stop()
         await self.voice.disconnect()
+        del self.cog.sessions[self.guild]
