@@ -40,7 +40,7 @@ async def on_ready():
     bot.log.info(f"Bot {bot.user} started!")
 
     # Set game to help prefix
-    # await bot.change_presence(activity=discord.Game(name=f"{bot.command_prefix(bot, None)[0]}help"))
+    await bot.change_presence(activity=discord.Game(name=f"{bot.command_prefix(bot, None)[0]}help"))
 
     print(f"""#--------------------------------------#
 | Succesfully logged in as {bot.user}

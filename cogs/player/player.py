@@ -23,70 +23,20 @@ from .track import *
 class Playlist:
     """mp3 playlist object"""
 
-    def __init__(self, log, *, playlist_directory=None, cache_length=None):
-
-        self.log = log
-        self.playlist_directory = playlist_directory or DEFAULT_PLAYLIST_DIRECTORY
-
-        self.tracks = self._get_tracks
-        self.requests = list()
-        self.playlist = list(self._get_new_track for track in range(
-            cache_length or DEFAULT_CACHE_LENGTH))
-
-    @property
-    def _get_tracks(self):
-        """Returns a list of mp3 files in the playlist directory"""
-        files = glob(self.playlist_directory + "/*.mp3")
-        shuffle(files)
-        return files
-
-    @property
-    def _get_new_track(self):
-        """Retruns the next item in the playlist as a :class:Mp3File"""
-        try:
-            return Mp3File(self.log, self.tracks.pop(0))
-        except (IndexError, TrackError):
-            self.tracks = self._get_tracks
-            return self._get_new_track
-
-    @property
-    def queue(self):
-        """Returns the next 10 items in the playlist queue"""
-        return (self.requests + self.playlist)[:10]
-
-    @property
-    def next_track(self):
-        """Returns the next track"""
-        if self.requests:
-            return self.requests.pop(0)
-        self.playlist.append(self._get_new_track)
-        return self.playlist.pop(0)
-
-    def add_request(self, request, *, front=False):
-        """Adds the requested song to the playlist"""
-        if front:
-            self.requests.insert(0, request)
-        else:
-            self.requests.append(request)
-
-
-class RequestPlaylist:
-    """Request only playlist object"""
-
     def __init__(self):
         self.requests = list()
 
     @property
     def queue(self):
         """Returns the next 10 items in the playlist queue"""
-        return self.requests[:10]
+        return (self.requests)[:10]
 
     @property
     def next_track(self):
         """Returns the next track"""
-        if self.requests:
+        try:
             return self.requests.pop(0)
-        else:
+        except IndexError:
             return None
 
     def add_request(self, request, *, front=False):
@@ -100,19 +50,16 @@ class RequestPlaylist:
 class Session:
     """Discord MP3Player session"""
 
-    def __init__(self, bot, cog, voice, log_channel, *, playlist=None, permissions=None):
-
+    def __init__(self, bot, cog, voice):
         self.bot = bot
         self.voice = voice
         self.cog = cog
 
         self.guild = self.voice.guild
 
-        self.log_channel = log_channel
-        self.playlist = playlist or RequestPlaylist()
-        self.permissions = permissions or dict()
+        self.playlist = Playlist()
 
-        self.is_playing = True
+        self.is_playing = False
         self.current_track = None
 
         self.skip_requests = list()
@@ -120,9 +67,6 @@ class Session:
         self.volume = DEFAULT_VOLUME
 
         self.play_next_song = asyncio.Event()
-
-        if playlist:
-            self.player = self.bot.loop.create_task(self._player_task())
 
     @property
     def listeners(self):
@@ -156,15 +100,6 @@ class Session:
     async def _play_track(self, track):
         """Plays the specified track"""
         self.current_track = track
-
-        # Log track to log_channel
-        if self.log_channel and self.is_playing:
-            try:
-                await self.log_channel.send(**self.current_track.playing_embed)
-            except discord.Forbidden as e:
-                self.bot.log.error(
-                    "Failed to log current track to log_channel")
-                self.bot.log.error(f"{type(e).__name__}: {e}")
 
         player = discord.PCMVolumeTransformer(
             self.current_track.player, self.volume)

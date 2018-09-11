@@ -8,7 +8,6 @@ Copyright (c) 2017 Joshua Butt
 """
 
 import aiohttp
-import difflib
 import re
 
 from glob import glob
@@ -40,44 +39,6 @@ class Search:
     def search_embed(self):
         """Returns an instance of :class:`discord.Embed`"""
         raise NotImplementedError
-
-
-class Mp3FileSearch(Search):
-    def __init__(self, log, search_query, requester):
-
-        self.log = log
-        self.search_query = search_query
-        self.requester = requester
-        self.files = dict()
-        self.tracks = list()
-
-    async def get(self):
-        for filename in glob(DEFAULT_PLAYLIST_DIRECTORY + "/*.mp3"):
-            search_term = filename[len(DEFAULT_PLAYLIST_DIRECTORY):-4]
-            search_term = re.sub(r"[^A-z\s]", '', search_term.lower())
-            self.files[search_term] = filename
-
-        for search_term in difflib.get_close_matches(re.sub(r"[^A-z\s]", '', self.search_query.lower()), self.files, n=SEARCH_RESULT_LIMIT, cutoff=0.1):
-            try:
-                self.tracks.append(
-                    Mp3File(self.log, self.files[search_term], requester=self.requester))
-            except TrackError:
-                pass
-
-    @property
-    def search_embed(self):
-        track_list = ""
-        for index, track in enumerate(self.tracks):
-            track_list += f"{index+1} - {track.title} by {track.artist}\n"
-
-        embed = discord.Embed(
-            title=f"Results for search - Requested by {self.requester.name}", description=track_list, colour=0xe57a80)
-        embed.set_author(
-            name=f"Local Tracks - Results for search {self.search_query}", icon_url=self.requester.avatar_url)
-
-        return {
-            "embed": embed
-        }
 
 
 class YoutubeSearch(Search):
@@ -187,7 +148,6 @@ class ClypSearch(Search):
 
 
 search_types = [
-    (Mp3FileSearch, "mp3"),
     (YoutubeSearch, "youtube"),
     (ClypSearch, "clyp")
 ]

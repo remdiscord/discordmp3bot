@@ -10,12 +10,9 @@ Copyright (c) 2017 Joshua Butt
 import discord
 import pafy
 
-from mutagen.mp3 import MP3
-
 from .config import *
 
 __all__ = [
-    'Mp3File',
     'YoutubeVideo',
     'ClypTrack',
 
@@ -50,93 +47,6 @@ class Track:
     def queue(self):
         """Returns a string containg information to be displayed in the upcoming queue"""
         raise NotImplementedError
-
-# - Local MP3 File
-
-
-class Mp3File(Track):
-    """Class containing metadata for MP3 file"""
-
-    def __init__(self, log, file, *, requester=None):
-
-        self.log = log
-        self.requester = requester
-
-        self.file = file
-        self.filename = self.file.encode("utf-8", 'ignore')
-        self.title = None
-        self.artist = None
-        self.date = None
-        self.album = None
-
-        try:
-            mp3_file = MP3(self.file)
-        except MutagenError:
-            self.log.error(f"Failed to load track {self.filename}")
-            raise TrackError("Unable to find file")
-
-        tags = [
-            ['title', u'TIT2'], ['album', u'TALB'],
-            ['artist', u'TPE1'], ['date', u'TDRC'],
-        ]
-
-        # Strip MP3 metadata
-        for var, tag in tags:
-            try:
-                setattr(self, var, mp3_file.tags[tag][0])
-            except KeyError:
-                self.log.warning(
-                    f"Failed to find {var} for {self.filename} perhaps you have no ID3 tags populated")
-                if var == 'title':
-                    setattr(self, var, self.file.rsplit('/', 1)[1][:4])
-                else:
-                    setattr(self, var, "???")
-
-            except TypeError:
-                self.log.error(f"Failed to load track {self.filename}")
-                raise TrackError("Possibly corrupt MP3 tag")
-
-        # Find album artwork
-        try:
-            self.cover = mp3_file[u'APIC:'].data
-        except KeyError as e:
-            self.log.warning(f"Failed to find cover for {self.filename}")
-            self.cover = open(ART_NOT_FOUND_FILE, 'rb')
-
-    @property
-    def player(self):
-        return discord.FFmpegPCMAudio(self.file)
-
-    @property
-    def request_embed(self):
-        embed = discord.Embed(title="Local track request...",
-                              description=f"adding **{self.title}** by **{self.artist}** to the queue...", colour=0x009688)
-        embed.set_author(
-            name=f"Local track - requested by {self.requester.name}", icon_url=self.requester.avatar_url)
-        embed.set_thumbnail(url="attachment://cover.jpg")
-        return {
-            "embed": embed,
-            "file": discord.File(self.cover, "cover.jpg")
-        }
-
-    @property
-    def playing_embed(self):
-        embed = discord.Embed(
-            title=self.title, description=f"{self.album} - ({self.date})", colour=0x009688)
-        embed.set_author(name=self.artist)
-        embed.set_thumbnail(url="attachment://cover.jpg")
-        return {
-            "embed": embed,
-            "file": discord.File(self.cover, "cover.jpg")
-        }
-
-    @property
-    def queue(self):
-        return {
-            "name": self.title,
-            "value": f"{self.artist}: {self.album} - ({self.date})"
-        }
-# - Youtube Video
 
 
 class YoutubeVideo(Track):
@@ -189,8 +99,6 @@ class YoutubeVideo(Track):
             "value": f"{self.creator} - requested by - {self.requester.name}"
         }
 
-
-# - Clyp track
 
 class ClypTrack(Track):
     """Class containing metadata for a Clyp Track"""
