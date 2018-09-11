@@ -22,6 +22,7 @@ from .track import *
 
 class Playlist:
     """mp3 playlist object"""
+
     def __init__(self, log, *, playlist_directory=None, cache_length=None):
 
         self.log = log
@@ -29,7 +30,8 @@ class Playlist:
 
         self.tracks = self._get_tracks
         self.requests = list()
-        self.playlist = list(self._get_new_track for track in range(cache_length or DEFAULT_CACHE_LENGTH))
+        self.playlist = list(self._get_new_track for track in range(
+            cache_length or DEFAULT_CACHE_LENGTH))
 
     @property
     def _get_tracks(self):
@@ -37,7 +39,7 @@ class Playlist:
         files = glob(self.playlist_directory + "/*.mp3")
         shuffle(files)
         return files
-    
+
     @property
     def _get_new_track(self):
         """Retruns the next item in the playlist as a :class:Mp3File"""
@@ -47,7 +49,7 @@ class Playlist:
             self.tracks = self._get_tracks
             return self._get_new_track
 
-    @property 
+    @property
     def queue(self):
         """Returns the next 10 items in the playlist queue"""
         return (self.requests + self.playlist)[:10]
@@ -70,8 +72,9 @@ class Playlist:
 
 class Session:
     """Discord MP3Player session"""
+
     def __init__(self, bot, voice, log_channel, playlist, *, permissions=None):
-        
+
         self.bot = bot
         self.voice = voice
 
@@ -81,7 +84,7 @@ class Session:
 
         self.is_playing = True
         self.current_track = None
-        
+
         self.skip_requests = list()
         self.repeat_requests = list()
         self.volume = DEFAULT_VOLUME
@@ -92,7 +95,8 @@ class Session:
     @property
     def listeners(self):
         """Returns the list of current listeners"""
-        listeners = [m for m in self.voice.channel.members if not (m.voice.self_deaf or m.voice.deaf)]
+        listeners = [m for m in self.voice.channel.members if not (
+            m.voice.self_deaf or m.voice.deaf)]
         return list(filter(self.voice.guild.me.__ne__, listeners))
 
     def _toggle_next(self, error=None):
@@ -101,7 +105,7 @@ class Session:
             self.bot.log.error(f"Error occured playing track: {error}")
         self.skip_requests = list()
         self.bot.loop.call_soon_threadsafe(self.play_next_song.set)
-    
+
     def change_volume(self, volume):
         """Changes the player's volume"""
         self.volume = volume
@@ -115,16 +119,18 @@ class Session:
     async def _play_track(self, track):
         """Plays the specified track"""
         self.current_track = track
-        
+
         # Log track to log_channel
         if self.log_channel and self.is_playing:
             try:
                 await self.log_channel.send(**self.current_track.playing_embed)
             except discord.Forbidden as e:
-                self.bot.log.error("Failed to log current track to log_channel")
+                self.bot.log.error(
+                    "Failed to log current track to log_channel")
                 self.bot.log.error(f"{type(e).__name__}: {e}")
 
-        player = discord.PCMVolumeTransformer(self.current_track.player, self.volume)
+        player = discord.PCMVolumeTransformer(
+            self.current_track.player, self.volume)
         self.voice.play(source=player, after=self._toggle_next)
 
     async def check_voice_state(self):

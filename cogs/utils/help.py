@@ -35,6 +35,7 @@ _mentions_transforms = {
     '@here': '@\u200bhere'
 }
 
+
 def rewrite():
     return discord.version_info.major == 1
 
@@ -109,9 +110,9 @@ class Help(formatter.HelpFormatter):
         else:
             name = self.me.display_name if not '' else self.bot.user.name
         author = {
-                'name': '{0} Help Manual'.format(name),
-                'icon_url': self.avatar
-            }
+            'name': '{0} Help Manual'.format(name),
+            'icon_url': self.avatar
+        }
         return author
 
     @property
@@ -134,7 +135,8 @@ class Help(formatter.HelpFormatter):
     def get_ending_note(self):
         # command_name = self.context.invoked_with
         return "Type {0}help <command> for more info on a command.\n" \
-               "You can also type {0}help <category> for more info on a category.".format(self.clean_prefix)
+               "You can also type {0}help <category> for more info on a category.".format(
+                   self.clean_prefix)
 
     async def format(self, ctx, command):
         """Formats command for output.
@@ -165,13 +167,15 @@ class Help(formatter.HelpFormatter):
         if isinstance(command, discord.ext.commands.core.Command):
             # <signature portion>
             emb['embed']['title'] = emb['embed']['description']
-            emb['embed']['description'] = '`Syntax: {0}`'.format(self.get_command_signature())
+            emb['embed']['description'] = '`Syntax: {0}`'.format(
+                self.get_command_signature())
 
             # <long doc> section
             if command.help:
                 name = '__{0}__'.format(command.help.split('\n\n')[0])
                 name_length = len(name) - 4
-                value = command.help[name_length:].replace('[p]', self.clean_prefix)
+                value = command.help[name_length:].replace(
+                    '[p]', self.clean_prefix)
                 if value == '':
                     value = empty
                 field = {
@@ -207,7 +211,8 @@ class Help(formatter.HelpFormatter):
                 commands = sorted(commands)
                 if len(commands) > 0:
                     field['name'] = category
-                    field['value'] = self._add_subcommands(commands)  # May need paginated
+                    field['value'] = self._add_subcommands(
+                        commands)  # May need paginated
                     emb['fields'].append(field)
 
         else:
@@ -216,7 +221,8 @@ class Help(formatter.HelpFormatter):
             if filtered:
                 field = {
                     'name': '**__Commands:__**' if not self.is_bot() and self.is_cog() else '**__Subcommands:__**',
-                    'value': self._add_subcommands(filtered),  # May need paginated
+                    # May need paginated
+                    'value': self._add_subcommands(filtered),
                     'inline': False
                 }
 
@@ -224,7 +230,7 @@ class Help(formatter.HelpFormatter):
 
         return emb
 
-    async def format_help_for(self, ctx, command_or_bot, reason: str=None):
+    async def format_help_for(self, ctx, command_or_bot, reason: str = None):
         """Formats the help page and handles the actual heavy lifting of how  ### WTF HAPPENED?
         the help command looks like. To change the behaviour, override the
         :meth:`~.HelpFormatter.format` method.
@@ -255,7 +261,8 @@ class Help(formatter.HelpFormatter):
 
     def simple_embed(self, title=None, description=None, color=None, author=None):
         # Shortcut
-        embed = discord.Embed(title=title, description=description, color=color)
+        embed = discord.Embed(
+            title=title, description=description, color=color)
         embed.set_footer(text=self.bot.formatter.get_ending_note())
         if author:
             embed.set_author(**author)
@@ -271,7 +278,7 @@ class Help(formatter.HelpFormatter):
     @commands.command(name='help', pass_context=True)
     async def help(self, ctx, *cmds: str):
         """Shows help documentation.
-        
+
         [p]**help**: Shows the help manual.
         [p]**help** command: Show help for a command
         [p]**help** Category: Show commands and description for a category"""
@@ -314,10 +321,10 @@ class Help(formatter.HelpFormatter):
                         return
                 except AttributeError:
                     await self.send(self.destination,
-                                    embed=self.simple_embed(title=
-                                                            'Command "{0.name}" has no subcommands.'.format(command),
-                                                            color=self.color,
-                                                            author=self.author))
+                                    embed=self.simple_embed(title='Command "{0.name}" has no subcommands.'.format(
+                                        command),
+                                        color=self.color,
+                                        author=self.author))
                     return
 
             await self.bot.formatter.format_help_for(ctx, command)

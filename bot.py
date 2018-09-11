@@ -33,13 +33,14 @@ handler.setFormatter(formatter)
 bot.log.addHandler(handler)
 bot.log.info("Instance started.")
 
+
 @bot.event
 async def on_ready():
     bot.owner = discord.utils.get(bot.get_all_members(), id=bot.owner_id)
     bot.log.info(f"Bot {bot.user} started!")
 
     # Set game to help prefix
-    await bot.change_presence(game=discord.Game(name=f"{bot.command_prefix(bot, None)[0]}help"))
+    # await bot.change_presence(activity=discord.Game(name=f"{bot.command_prefix(bot, None)[0]}help"))
 
     print(f"""#--------------------------------------#
 | Succesfully logged in as {bot.user}
@@ -49,6 +50,7 @@ async def on_ready():
 | Owner: {bot.owner}
 | Guilds: {len(bot.guilds)}
 # -------------------------------------#""")
+
 
 @bot.event
 async def on_command_error(ctx, e):

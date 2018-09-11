@@ -16,13 +16,14 @@ from discord.ext import commands
 
 
 class Admin:
-    
+
     def __init__(self, bot):
         self.bot = bot
 
-    async def _response(self, ctx, title:str, *, description:str=None, colour=None, timeout=3):
+    async def _response(self, ctx, title: str, *, description: str = None, colour=None, timeout=3):
         """Send embed message response"""
-        embed_message = discord.Embed(title=title, description=description, colour=colour)
+        embed_message = discord.Embed(
+            title=title, description=description, colour=colour)
 
         if self.bot.user.bot:
             try:
@@ -40,7 +41,7 @@ class Admin:
 
     @commands.command(pass_context=True)
     @commands.is_owner()
-    async def load(self, ctx, cog:str):
+    async def load(self, ctx, cog: str):
         """Loads a specified cog"""
         cog = f"cogs.{cog}"
         try:
@@ -51,7 +52,7 @@ class Admin:
 
     @commands.command(pass_context=True)
     @commands.is_owner()
-    async def unload(self, ctx, cog:str):
+    async def unload(self, ctx, cog: str):
         """Unloads a specified cog"""
         cog = f"cogs.{cog}"
         try:
@@ -62,7 +63,7 @@ class Admin:
 
     @commands.command(pass_context=True)
     @commands.is_owner()
-    async def reload(self, ctx, cog:str):
+    async def reload(self, ctx, cog: str):
         """Reloads a specified cog"""
         cog = f"cogs.{cog}"
         try:
@@ -74,9 +75,9 @@ class Admin:
 
     @commands.command(pass_context=True)
     @commands.is_owner()
-    async def eval(self, ctx, *, code:str):
+    async def eval(self, ctx, *, code: str):
         """Evaulates python code"""
-        
+
         env = {
             'bot': ctx.bot,
             'ctx': ctx,
@@ -87,7 +88,8 @@ class Admin:
         }
         env.update(globals())
 
-        exec_test = re.compile(r"(?:^(?:(?:for)|(?:def)|(?:while)|(?:if)))|(?:^([a-z_][A-z0-9_\-\.]*)\s?(?:\+|-|\\|\*)?=)")
+        exec_test = re.compile(
+            r"(?:^(?:(?:for)|(?:def)|(?:while)|(?:if)))|(?:^([a-z_][A-z0-9_\-\.]*)\s?(?:\+|-|\\|\*)?=)")
         commands = []
 
         for command in code.split(';'):
@@ -100,22 +102,24 @@ class Admin:
                     result = env.get(is_exec.group(1), None)
                     if inspect.isawaitable(result):
                         result = await result
-                        env.update({is_exec.group(1): result}) 
+                        env.update({is_exec.group(1): result})
                 else:
                     result = eval(command, env)
                     if inspect.isawaitable(result):
-                        result = await result          
+                        result = await result
 
             except Exception as e:
                 result = f"{type(e).__name__}: {e}"
 
             commands.append([
                 command,
-                result 
+                result
             ])
 
-        response_str = f"```py\n" + '\n'.join([f">>> {command}\n{result}" for command, result in commands]) + "\n```"
-        
+        response_str = f"```py\n" + \
+            '\n'.join([f">>> {command}\n{result}" for command,
+                       result in commands]) + "\n```"
+
         if not self.bot.user.bot:
             await ctx.message.edit(content=response_str)
         else:
@@ -137,6 +141,7 @@ class Admin:
             await self._response(ctx, "Git Pull", description=self.pull(), colour=0x009688)
         await ctx.send(embed=discord.Embed(title="Restarting...", colour=0x009688))
         await self.bot.logout()
+
 
 def setup(bot):
     bot.add_cog(Admin(bot))
