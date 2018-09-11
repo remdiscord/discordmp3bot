@@ -51,6 +51,7 @@ class Mp3FileSearch(Search):
         self.files = dict()
         self.tracks = list()
 
+    async def get(self):
         for filename in glob(DEFAULT_PLAYLIST_DIRECTORY + "/*.mp3"):
             search_term = filename[len(DEFAULT_PLAYLIST_DIRECTORY):-4]
             search_term = re.sub(r"[^A-z\s]", '', search_term.lower())
@@ -59,7 +60,7 @@ class Mp3FileSearch(Search):
         for search_term in difflib.get_close_matches(re.sub(r"[^A-z\s]", '', self.search_query.lower()), self.files, n=SEARCH_RESULT_LIMIT, cutoff=0.1):
             try:
                 self.tracks.append(
-                    Mp3File(self.log, self.files[search_term], requester=requester))
+                    Mp3File(self.log, self.files[search_term], requester=self.requester))
             except TrackError:
                 pass
 
@@ -86,9 +87,10 @@ class YoutubeSearch(Search):
         self.requester = requester
         self.tracks = list()
 
+    async def get(self):
         videos = list()
         youtube_api_url = f"https://www.googleapis.com/{YOUTUBE_API_SERVICE_NAME}/{YOUTUBE_API_VERSION}"
-        youtube_search_url = f"{youtube_api_url}/search?q={search_query}&part=snippet&maxResults=7&key={YOUTUBE_API_KEY}&alt=json"
+        youtube_search_url = f"{youtube_api_url}/search?q={self.search_query}&part=snippet&maxResults=7&key={YOUTUBE_API_KEY}&alt=json"
 
         async with aiohttp.ClientSession() as session:
             async with session.get(youtube_search_url) as resp:
@@ -153,8 +155,9 @@ class ClypSearch(Search):
         self.search_query = search_query
         self.requester = requester
 
+    async def get(self):
         track = re.search(
-            r"(?:(?:clyp\.it\/)|^)([A-z\d]+)(?:$|\#)", search_query)
+            r"(?:(?:clyp\.it\/)|^)([A-z\d]+)(?:$|\#)", self.search_query)
         if track is None:
             raise SearchError("Unable to find clyp with given ID or URL")
 

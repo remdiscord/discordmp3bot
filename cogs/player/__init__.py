@@ -226,6 +226,7 @@ class Player:
 
         try:
             search = search_type(self.bot.log, query, ctx.author)
+            await search.get()
 
             result_message = await ctx.send(**search.search_embed)
 
