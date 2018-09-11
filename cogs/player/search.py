@@ -98,7 +98,8 @@ class YoutubeSearch(Search):
             async with aiohttp.ClientSession() as session:
                 async with session.get(youtube_search_url) as resp:
 
-                    for search_result in await resp.json()["items"]:
+                    data = await resp.json()
+                    for search_result in data["items"]:
                         if search_result["id"]["kind"] == "youtube#video":
                             videos.append(search_result["id"]["videoId"])
 
@@ -107,7 +108,8 @@ class YoutubeSearch(Search):
             async with aiohttp.ClientSession() as session:
                 async with session.get(youtube_video_list_url) as resp:
 
-                    for search_result in await resp.json()["items"]:
+                    data = await resp.json()
+                    for search_result in data["items"]:
                         hour_length = re.search(
                             r"(\d+)H", search_result["contentDetails"]["duration"])
                         if hour_length:
