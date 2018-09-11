@@ -121,8 +121,8 @@ class YoutubeSearch(Search):
             self.tracks = self.tracks[:SEARCH_RESULT_LIMIT]
         
         except HttpError as e:
-            self.bot.log.error(f"Error querying youtube API, likely bad API key")
-            self.bot.log.error(f"{type(e).__name__}: {e}")
+            self.log.error(f"Error querying youtube API, likely bad API key")
+            self.log.error(f"{type(e).__name__}: {e}")
             raise Exception("Error querying youtube API, likely bad API key")
 
     @property
