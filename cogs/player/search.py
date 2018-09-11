@@ -88,47 +88,45 @@ class YoutubeSearch(Search):
         self.tracks = list()
 
     async def get(self):
-        videos = list()
-        youtube_api_url = f"https://www.googleapis.com/{YOUTUBE_API_SERVICE_NAME}/{YOUTUBE_API_VERSION}"
-        youtube_search_url = f"{youtube_api_url}/search?q={self.search_query}&part=snippet&maxResults=7&key={YOUTUBE_API_KEY}&alt=json"
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(youtube_search_url) as resp:
+        try:
 
-                if resp.status != 200:
-                    self.log.error(
-                        f"Error querying youtube API, likely bad API key")
-                    raise Exception(
-                        "Error querying youtube API, likely bad API key")
+            videos = list()
+            youtube_api_url = f"https://www.googleapis.com/{YOUTUBE_API_SERVICE_NAME}/{YOUTUBE_API_VERSION}"
+            youtube_search_url = f"{youtube_api_url}/search?q={self.search_query}&part=snippet&maxResults=7&key={YOUTUBE_API_KEY}&alt=json"
 
-                for search_result in await resp.json()["items"]:
-                    if search_result["id"]["kind"] == "youtube#video":
-                        videos.append(search_result["id"]["videoId"])
+            async with aiohttp.ClientSession() as session:
+                async with session.get(youtube_search_url) as resp:
 
-        youtube_video_list_url = f"{youtube_api_url}/videos?part=snippet%2CcontentDetails&id={'%2C'.join(videos)}&key={YOUTUBE_API_KEY}&alt=json"
+                    for search_result in await resp.json()["items"]:
+                        if search_result["id"]["kind"] == "youtube#video":
+                            videos.append(search_result["id"]["videoId"])
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(youtube_video_list_url) as resp:
+            youtube_video_list_url = f"{youtube_api_url}/videos?part=snippet%2CcontentDetails&id={'%2C'.join(videos)}&key={YOUTUBE_API_KEY}&alt=json"
 
-                if resp.status != 200:
-                    self.log.error(
-                        f"Error querying youtube API, likely bad API key")
-                    raise Exception(
-                        "Error querying youtube API, likely bad API key")
+            async with aiohttp.ClientSession() as session:
+                async with session.get(youtube_video_list_url) as resp:
 
-                for search_result in await resp.json()["items"]:
-                    hour_length = re.search(
-                        r"(\d+)H", search_result["contentDetails"]["duration"])
-                    if hour_length:
-                        continue
+                    for search_result in await resp.json()["items"]:
+                        hour_length = re.search(
+                            r"(\d+)H", search_result["contentDetails"]["duration"])
+                        if hour_length:
+                            continue
 
-                    minute_length = re.search(
-                        r"(\d+)M", search_result["contentDetails"]["duration"])
-                    if minute_length is None or int(minute_length.groups()[0]) < 10:
-                        self.tracks.append(YoutubeVideo(
-                            self.log, search_result, self.requester))
+                        minute_length = re.search(
+                            r"(\d+)M", search_result["contentDetails"]["duration"])
+                        if minute_length is None or int(minute_length.groups()[0]) < 10:
+                            self.tracks.append(YoutubeVideo(
+                                self.log, search_result, self.requester))
 
-        self.tracks = self.tracks[:SEARCH_RESULT_LIMIT]
+            self.tracks = self.tracks[:SEARCH_RESULT_LIMIT]
+
+        except Exception as e:
+            self.log.error(
+                f"Error querying youtube API, likely bad API key")
+            self.log.error(type(e).__name__ + ': ' + str(e))
+            raise SearchError(
+                "Error querying youtube API, likely bad API key")
 
     @property
     def search_embed(self):
