@@ -66,7 +66,7 @@ class YoutubeVideo(Track):
     @property
     def player(self):
         player = pafy.new(self.url)
-        return discord.FFmpegPCMAudio(player.getbestaudio().url, options="-bufsize 7680k")
+        return discord.FFmpegPCMAudio(player.getbestaudio().url, options="-vn -b:a 192k")
 
     @property
     def request_embed(self):
@@ -116,7 +116,7 @@ class ClypTrack(Track):
 
     @property
     def player(self):
-        return discord.FFmpegPCMAudio(self.track["Mp3Url"], options="-bufsize 7680k")
+        return discord.FFmpegPCMAudio(self.track["Mp3Url"], options="-vn -b:a 192k")
 
     @property
     def request_embed(self):
